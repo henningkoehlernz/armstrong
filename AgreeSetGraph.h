@@ -48,6 +48,9 @@ public:
     AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp &closure);
     AgreeSetGraph(const AgreeSetGraph &g);
     const AttributeSet& at(NodeID a, NodeID b) const;
+    // quick test whether agreeSet might be assignable to (a,b)
+    bool canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const;
+    // try to assign agreeSet to (a,b)
     bool assign(NodeID a, NodeID b, AttributeSet agreeSet);
 };
 

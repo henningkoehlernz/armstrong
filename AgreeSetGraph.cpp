@@ -2,7 +2,7 @@
 
 //----------------- Util ------------------------
 
-bool subset(AttributeSet a, AttributeSet b)
+static bool subset(const AttributeSet &a, const AttributeSet &b)
 {
     for ( int i = 0; i < a.size(); i++ )
         if ( a[i] && !b[i] )
@@ -10,7 +10,7 @@ bool subset(AttributeSet a, AttributeSet b)
     return true;
 }
 
-vector<NodeID> diff(AttributeSet a, AttributeSet b)
+static vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b)
 {
     vector<NodeID> d;
     for ( int i = 0; i < a.size(); i++ )
@@ -66,17 +66,24 @@ const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
     return edges[toEdge(a,b)].attSet;
 }
 
+bool AgreeSetGraph::canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const
+{
+    const EdgeData &e = edges[toEdge(a, b)];
+    return !e.assigned && subset(e.attSet, agreeSet);
+}
+
 bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet)
 {
-    struct AttLoc // Attribute + Location
+    if ( !canAssign(a, b, agreeSet) )
+        return false;
+    // Attribute + Location (=edge) it was added
+    struct AttLoc
     {
         AttID att;
         NodeID a, b;
         AttLoc(AttID att, NodeID a, NodeID b) : att(att), a(a), b(b) {}
     };
     EdgeData &e = edges[toEdge(a, b)];
-    if ( e.assigned || !subset(e.attSet, agreeSet) )
-        return false;
     // store attributes added to edges (causes near-cycles)
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
