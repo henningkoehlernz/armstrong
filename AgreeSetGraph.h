@@ -5,17 +5,21 @@
 using namespace std;
 
 typedef uint8_t NodeID;
+typedef uint8_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
 typedef vector<bool> AgreeSet;
 // for tracking connected components of attribute graphs
-typedef vector<vector<NodeID>> Partition;
+// each node points to a representative of its partition
+typedef vector<NodeID> Partition;
 
 struct EdgeData
 {
-    AgreeSet att;
-    bool forced, checked;
+    AgreeSet attSet;
+    bool assigned; // does the edge store an assigned agree-set?
+    EdgeData(size_t attCount);
+    EdgeData(const EdgeData &e);
 };
 
 class ClosureOp
