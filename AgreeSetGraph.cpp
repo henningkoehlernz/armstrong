@@ -2,7 +2,7 @@
 
 //----------------- Util ------------------------
 
-bool subset(AgreeSet a, AgreeSet b)
+bool subset(AttributeSet a, AttributeSet b)
 {
     for ( int i = 0; i < a.size(); i++ )
         if ( a[i] && !b[i] )
@@ -10,7 +10,7 @@ bool subset(AgreeSet a, AgreeSet b)
     return true;
 }
 
-vector<NodeID> diff(AgreeSet a, AgreeSet b)
+vector<NodeID> diff(AttributeSet a, AttributeSet b)
 {
     vector<NodeID> d;
     for ( int i = 0; i < a.size(); i++ )
@@ -21,24 +21,30 @@ vector<NodeID> diff(AgreeSet a, AgreeSet b)
 
 //----------------- EdgeData --------------------
 
-EdgeData::EdgeData(size_t attCount) : attSet(attCount)
+AgreeSetGraph::EdgeData::EdgeData(size_t attCount) : attSet(attCount)
 {
 }
 
-EdgeData::EdgeData(const EdgeData &e) : attSet(e.attSet), assigned(e.assigned)
+AgreeSetGraph::EdgeData::EdgeData(const EdgeData &e) : attSet(e.attSet), assigned(e.assigned)
 {
-}
-
-EdgeID AgreeSetGraph::edge(NodeID a, NodeID b)
-{
-    assert(a != b);
-    if ( a > b )
-        return static_cast<EdgeID>(a - 1) * (a - 2) + b;
-    else
-        return static_cast<EdgeID>(b - 1) * (b - 2) + a;
 }
 
 //----------------- AgreeSetGraph ---------------
+
+EdgeID AgreeSetGraph::toEdge(NodeID a, NodeID b)
+{
+    assert(a != b);
+    if ( a > b )
+        return static_cast<EdgeID>(a) * (a - 1) + b;
+    else
+        return static_cast<EdgeID>(b) * (b - 1) + a;
+}
+
+void AgreeSetGraph::toNodes(EdgeID e, NodeID &a, NodeID &b)
+{
+    b = 0.5001 + sqrt(2*e + 0.25); // rounded down, increase slightly to avoid rounding errors
+    a = e - b * (b - 1) / 2;
+}
 
 AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp &closure) : closure(closure)
 {
@@ -55,51 +61,82 @@ AgreeSetGraph::AgreeSetGraph(const AgreeSetGraph &g) : closure(g.closure), edges
 {
 }
 
-const AgreeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
+const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
 {
-    return edges[edge(a,b)].attSet;
+    return edges[toEdge(a,b)].attSet;
 }
 
-bool AgreeSetGraph::assign(NodeID a, NodeID b, AgreeSet value)
+bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet)
 {
-    EdgeData &e = edges[edge(a, b)];
-    if ( e.assigned || !subset(e.attSet, value) )
-        return false;
-    // store attributes added to edge for later processing
-    vector<AttID> extraAtt = diff(value, e.attSet);
-    e.attSet = value;
-    e.assigned = true;
-    // fix near-cycles & update partitions
-    unordered_set<EdgeID> openEdges;
-    for ( AttID att : extraAtt )
+    struct AttLoc // Attribute + Location
     {
-        Partition &p = attComp[att];
-        // find components to join
-        vector<NodeID> aComp, bComp;
-        for ( NodeID i = 0; i < p.size(); i++ )
+        AttID att;
+        NodeID a, b;
+        AttLoc(AttID att, NodeID a, NodeID b) : att(att), a(a), b(b) {}
+    };
+    EdgeData &e = edges[toEdge(a, b)];
+    if ( e.assigned || !subset(e.attSet, agreeSet) )
+        return false;
+    // store attributes added to edges (causes near-cycles)
+    vector<AttLoc> extraAtt;
+    for ( AttID att : diff(agreeSet, e.attSet) )
+        extraAtt.push_back(AttLoc(att, a, b));
+    // now we can assign
+    e.attSet = agreeSet;
+    e.assigned = true;
+    while ( !extraAtt.empty() )
+    {
+        // store edges which may no longer have closed attribute sets
+        unordered_set<EdgeID> openEdges;
+        // fix near-cycles & update partitions
+        for ( AttLoc attLoc : extraAtt )
         {
-            if ( p[i] == p[a] )
-                aComp.push_back(i);
-            else if ( p[i] == p[b] )
+            Partition &p = attComp[attLoc.att];
+            // may have joined components already
+            if ( p[attLoc.a] == p[attLoc.b] )
+                continue;
+            // find components to join
+            vector<NodeID> aComp, bComp;
+            for ( NodeID i = 0; i < p.size(); i++ )
             {
-                bComp.push_back(i);
-                p[b] = p[a]; // merge partitions
+                if ( p[i] == p[attLoc.a] )
+                    aComp.push_back(i);
+                else if ( p[i] == p[attLoc.b] )
+                {
+                    bComp.push_back(i);
+                    p[attLoc.b] = p[attLoc.a]; // merge partitions
+                }
+            }
+            // add att to all edges between components
+            for ( NodeID aNode : aComp )
+                for ( NodeID bNode : bComp )
+                {
+                    EdgeID eID = toEdge(aNode, bNode);
+                    EdgeData &e = edges[eID];
+                    if ( e.attSet[attLoc.att] )
+                        continue;
+                    if ( e.assigned )
+                        return false; // cannot extend assigned edges
+                    e.attSet[attLoc.att] = true;
+                    // extension may create non-closed set
+                    openEdges.insert(eID);
+                }
+        }
+        extraAtt.clear();
+        // fix open edges
+        for ( EdgeID eID : openEdges )
+        {
+            NodeID aNode, bNode;
+            toNodes(eID, aNode, bNode);
+            EdgeData &e = edges[eID];
+            AttributeSet cl = closure(e.attSet);
+            // TODO (potential optimization): closure shoudn't be entire attribute set
+            for ( AttID att : diff(cl, e.attSet) )
+            {
+                e.attSet[att] = true;
+                extraAtt.push_back(AttLoc(att, aNode, bNode));
             }
         }
-        // add att to all edges between components
-        for ( NodeID aNode : aComp )
-            for ( NodeID bNode : bComp )
-            {
-                EdgeID eID = edge(aNode, bNode);
-                EdgeData &e = edges[eID];
-                if ( e.attSet[att] )
-                    continue;
-                if ( e.assigned )
-                    return false; // cannot extend assigned edges
-                e.attSet[att] = true;
-                // extension may create non-closed set
-                openEdges.insert(eID);
-            }
     }
     return true;
 }

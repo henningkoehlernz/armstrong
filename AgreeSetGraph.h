@@ -9,23 +9,12 @@ typedef uint8_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
-typedef vector<bool> AgreeSet;
-// for tracking connected components of attribute graphs
-// each node points to a representative of its partition
-typedef vector<NodeID> Partition;
-
-struct EdgeData
-{
-    AgreeSet attSet;
-    bool assigned; // does the edge store an assigned agree-set?
-    EdgeData(size_t attCount);
-    EdgeData(const EdgeData &e);
-};
+typedef vector<bool> AttributeSet;
 
 class ClosureOp
 {
 public:
-    virtual AgreeSet operator()(const AgreeSet &a) const = 0;
+    virtual AttributeSet operator()(const AttributeSet &a) const = 0;
 };
 
 /**
@@ -34,8 +23,19 @@ public:
  */
 class AgreeSetGraph
 {
-    // convert vertex-pair (=edge) to integer, independent of number of nodes
-    static EdgeID edge(NodeID a, NodeID b);
+    // convert node-pair to integer, independent of number of nodes in graph
+    static EdgeID toEdge(NodeID a, NodeID b);
+    // convert edgeID to pair of nodes
+    static void toNodes(EdgeID e, NodeID &a, NodeID &b);
+
+    struct EdgeData
+    {
+        AttributeSet attSet;
+        bool assigned; // does the edge store an assigned agree-set?
+        EdgeData(size_t attCount);
+        EdgeData(const EdgeData &e);
+    };
+    typedef vector<NodeID> Partition;
 
     // agree-sets associated with edges
     vector<EdgeData> edges;
@@ -47,8 +47,8 @@ class AgreeSetGraph
 public:
     AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp &closure);
     AgreeSetGraph(const AgreeSetGraph &g);
-    const AgreeSet& at(NodeID a, NodeID b) const;
-    bool assign(NodeID a, NodeID b, AgreeSet value);
+    const AttributeSet& at(NodeID a, NodeID b) const;
+    bool assign(NodeID a, NodeID b, AttributeSet agreeSet);
 };
 
 #endif
