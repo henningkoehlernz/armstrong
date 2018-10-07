@@ -9,12 +9,22 @@ typedef uint8_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
-typedef vector<bool> AttributeSet;
+typedef bitset<64> AttributeSet;
 
 class ClosureOp
 {
 public:
     virtual AttributeSet operator()(const AttributeSet &a) const = 0;
+};
+
+class GenClosureOp : public ClosureOp
+{
+    vector<AttributeSet> generators;
+public:
+    static vector<AttributeSet> getGenerators(const vector<AttributeSet> &agreeSets);
+    virtual AttributeSet operator()(const AttributeSet &a) const;
+    GenClosureOp(const vector<AttributeSet> &generators);
+    GenClosureOp(const GenClosureOp &op);
 };
 
 /**
@@ -32,7 +42,7 @@ class AgreeSetGraph
     {
         AttributeSet attSet;
         bool assigned; // does the edge store an assigned agree-set?
-        EdgeData(size_t attCount);
+        EdgeData();
         EdgeData(const EdgeData &e);
     };
     typedef vector<NodeID> Partition;

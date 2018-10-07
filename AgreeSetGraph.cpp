@@ -2,12 +2,9 @@
 
 //----------------- Util ------------------------
 
-static bool subset(const AttributeSet &a, const AttributeSet &b)
+bool operator<=(const AttributeSet &a, const AttributeSet &b)
 {
-    for ( int i = 0; i < a.size(); i++ )
-        if ( a[i] && !b[i] )
-            return false;
-    return true;
+    return (a & ~b).none();
 }
 
 static vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b)
@@ -19,15 +16,55 @@ static vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b)
     return d;
 }
 
+//----------------- GenClosureOp ----------------
+
+template <typename T>
+static vector<T> operator-(const vector<T> &v, const T &value)
+{
+    vector<T> result;
+    for ( const T &elem : v )
+        if ( elem != value )
+            result.push_back(elem);
+    return result;
+}
+
+template <typename T>
+static bool contains(const vector<T> &v, const T &value)
+{
+    for ( const T &elem : v )
+        if ( elem == value )
+            return true;
+    return false;
+}
+
+vector<AttributeSet> GenClosureOp::getGenerators(const vector<AttributeSet> &agreeSets)
+{
+    vector<AttributeSet> result;
+    for ( const AttributeSet &ag : agreeSets )
+    {
+        GenClosureOp genOp(agreeSets - ag);
+        if ( genOp(ag) != ag )
+            result.push_back(ag);
+    }
+    return result;
+}
+
+AttributeSet GenClosureOp::operator()(const AttributeSet &a) const
+{
+    AttributeSet closure;
+    for ( const AttributeSet &gen : generators )
+        if ( a <= gen )
+            closure &= gen;
+    return closure;
+}
+
+GenClosureOp::GenClosureOp(const vector<AttributeSet> &generators) : generators(generators) {}
+GenClosureOp::GenClosureOp(const GenClosureOp &op) : generators(op.generators) {}
+
 //----------------- EdgeData --------------------
 
-AgreeSetGraph::EdgeData::EdgeData(size_t attCount) : attSet(attCount)
-{
-}
-
-AgreeSetGraph::EdgeData::EdgeData(const EdgeData &e) : attSet(e.attSet), assigned(e.assigned)
-{
-}
+AgreeSetGraph::EdgeData::EdgeData() {}
+AgreeSetGraph::EdgeData::EdgeData(const EdgeData &e) : attSet(e.attSet), assigned(e.assigned) {}
 
 //----------------- AgreeSetGraph ---------------
 
@@ -49,7 +86,7 @@ void AgreeSetGraph::toNodes(EdgeID e, NodeID &a, NodeID &b)
 AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp &closure) : closure(closure)
 {
     size_t edgeCount = nodeCount * (nodeCount - 1) / 2;
-    edges.resize(edgeCount, attCount);
+    edges.resize(edgeCount);
     // partitions all consist of single nodes
     Partition singleNodes(nodeCount);
     for ( int i = 0; i < nodeCount; i++ )
@@ -69,7 +106,7 @@ const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
 bool AgreeSetGraph::canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const
 {
     const EdgeData &e = edges[toEdge(a, b)];
-    return !e.assigned && subset(e.attSet, agreeSet);
+    return !e.assigned && e.attSet <= agreeSet;
 }
 
 bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet)
@@ -88,6 +125,10 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet)
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
         extraAtt.push_back(AttLoc(att, a, b));
+    // set of all attributes, used later for pruning
+    AttributeSet schema;
+    for ( size_t i = 0; i < attComp.size(); i++ )
+        schema[i] = true;
     // now we can assign
     e.attSet = agreeSet;
     e.assigned = true;
@@ -137,7 +178,9 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet)
             toNodes(eID, aNode, bNode);
             EdgeData &e = edges[eID];
             AttributeSet cl = closure(e.attSet);
-            // TODO (potential optimization): closure shoudn't be entire attribute set
+            // closure shouldn't be entire attribute set, otherwise smaller solution exists
+            if ( schema == cl )
+                return false;
             for ( AttID att : diff(cl, e.attSet) )
             {
                 e.attSet[att] = true;
