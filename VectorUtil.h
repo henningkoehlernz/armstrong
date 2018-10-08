@@ -1,6 +1,5 @@
 #ifndef VECTOR_UTIL_H
 #define VECTOR_UTIL_H
-namespace vutil {
 
 #include <bits/stdc++.h>
 
@@ -32,13 +31,13 @@ ostream& operator<<(ostream& os, const vector<T> &v)
     return os << ']';
 }
 
-template <size_t N>
-ostream& operator<<(ostream& os, const bitset<N> &bs)
+// for use with boost
+template <typename T>
+string str(const vector<T> &v)
 {
-    for ( size_t i = 0; i < N; i++ )
-        os << (bs[i] ? '1' : '0');
-    return os;
+    ostringstream os;
+    os << v;
+    return os.str();
 }
 
-}
 #endif

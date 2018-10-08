@@ -2,6 +2,7 @@
 #define AGREE_SET_GRAPH_H
 
 #include <bits/stdc++.h>
+#include <boost/log/trivial.hpp>
 using namespace std;
 
 typedef uint8_t NodeID;
@@ -9,7 +10,8 @@ typedef uint8_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
-#define MAX_ATT 64
+#define MAX_ATT 4
+#define MAX_NODE 4
 typedef bitset<MAX_ATT> AttributeSet;
 
 class ClosureOp
@@ -34,11 +36,12 @@ public:
  */
 class AgreeSetGraph
 {
+public:
     // convert node-pair to integer, independent of number of nodes in graph
     static EdgeID toEdge(NodeID a, NodeID b);
     // convert edgeID to pair of nodes
     static void toNodes(EdgeID e, NodeID &a, NodeID &b);
-
+private:
     struct EdgeData
     {
         AttributeSet attSet;

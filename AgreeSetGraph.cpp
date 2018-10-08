@@ -1,6 +1,5 @@
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
-using namespace vutil;
 
 //----------------- Util ------------------------
 
@@ -46,7 +45,7 @@ GenClosureOp::GenClosureOp(const GenClosureOp &op) : generators(op.generators) {
 
 //----------------- EdgeData --------------------
 
-AgreeSetGraph::EdgeData::EdgeData() {}
+AgreeSetGraph::EdgeData::EdgeData() : assigned(false) {}
 AgreeSetGraph::EdgeData::EdgeData(const EdgeData &e) : attSet(e.attSet), assigned(e.assigned) {}
 
 ostream& operator<<(ostream &os, const AgreeSetGraph::EdgeData &edge)
@@ -153,7 +152,11 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
                     if ( e.attSet[attLoc.att] )
                         continue;
                     if ( e.assigned )
+                    {
+                        BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): failed at ("
+                            << (int)aNode << ',' << (int)bNode << ") += " << (int)attLoc.att << " for g = " << *this;
                         return false; // cannot extend assigned edges
+                    }
                     e.attSet[attLoc.att] = true;
                     // extension may create non-closed set
                     openEdges.insert(eID);
@@ -187,7 +190,7 @@ ostream& operator<<(ostream &os, const AgreeSetGraph &g)
     {
         NodeID a, b;
         AgreeSetGraph::toNodes(e, a, b);
-        os << '(' << a << ',' << b << "):" << g.edges[e] << ' ';
+        os << '(' << (int)a << ',' << (int)b << "):" << g.edges[e] << ' ';
     }
     return os << '}';
 }
@@ -208,6 +211,8 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     };
     // reduce to generators
     const vector<AttributeSet> generators = GenClosureOp::getGenerators(agreeSets);
+    BOOST_LOG_TRIVIAL(debug) << "agreeSets = " << str(agreeSets);
+    BOOST_LOG_TRIVIAL(debug) << "generators = " << str(generators);
     const GenClosureOp closure(generators);
     // find initial graph parameters
     const size_t attCount = getMaxAtt(generators) + 1;
@@ -216,6 +221,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
     [&extendGraph,&closure,nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, int next = 0) -> bool
     {
+        BOOST_LOG_TRIVIAL(trace) << "extendGraph: g = " << g;
         if ( next >= gen.size() )
             return true;
         for ( NodeID a = 0; a < nodeCount - 1; a++ )
@@ -233,8 +239,9 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
                 }
         return false;
     };
-    while (true)
+    while ( nodeCount <= MAX_NODE )
     {
+        BOOST_LOG_TRIVIAL(debug) << "NodeCount = " << nodeCount;
         AgreeSetGraph g(nodeCount, attCount);
         // first generator can always be assigned
         if ( generators.size() > 0 )
@@ -244,4 +251,5 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
         // failure - try with more nodes
         nodeCount++;
     }
+    exit(1);
 }
