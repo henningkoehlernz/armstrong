@@ -34,6 +34,7 @@ vector<AttributeSet> GenClosureOp::getGenerators(const vector<AttributeSet> &agr
 AttributeSet GenClosureOp::operator()(const AttributeSet &a) const
 {
     AttributeSet closure;
+    closure.flip();
     for ( const AttributeSet &gen : generators )
         if ( a <= gen )
             closure &= gen;
@@ -62,15 +63,15 @@ EdgeID AgreeSetGraph::toEdge(NodeID a, NodeID b)
 {
     assert(a != b);
     if ( a > b )
-        return static_cast<EdgeID>(a) * (a - 1) + b;
+        return static_cast<EdgeID>(a) * (a - 1) / 2 + b;
     else
-        return static_cast<EdgeID>(b) * (b - 1) + a;
+        return static_cast<EdgeID>(b) * (b - 1) / 2 + a;
 }
 
 void AgreeSetGraph::toNodes(EdgeID e, NodeID &a, NodeID &b)
 {
-    b = 0.5001 + sqrt(2*e + 0.25); // rounded down, increase slightly to avoid rounding errors
-    a = e - b * (b - 1) / 2;
+    b = 0.5001 + sqrt(2.0*e + 0.25); // rounded down, increase slightly to avoid rounding errors
+    a = e - (EdgeID)b * (b - 1) / 2;
 }
 
 AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
@@ -97,22 +98,31 @@ bool AgreeSetGraph::canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const
     return !e.assigned && e.attSet <= agreeSet;
 }
 
+// Attribute + Location (=edge) it was added
+struct AttLoc
+{
+    AttID att;
+    NodeID a, b;
+    AttLoc(AttID att, NodeID a, NodeID b) : att(att), a(a), b(b) {}
+};
+
+static ostream& operator<<(ostream &os, const AttLoc &attLoc)
+{
+    return os << (int)attLoc.att << "@(" << (int)attLoc.a << ',' << (int)attLoc.b << ')';
+}
+
 bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure)
 {
+    /*
     if ( !canAssign(a, b, agreeSet) )
         return false;
-    // Attribute + Location (=edge) it was added
-    struct AttLoc
-    {
-        AttID att;
-        NodeID a, b;
-        AttLoc(AttID att, NodeID a, NodeID b) : att(att), a(a), b(b) {}
-    };
+    */
     EdgeData &e = edges[toEdge(a, b)];
     // store attributes added to edges (causes near-cycles)
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
         extraAtt.push_back(AttLoc(att, a, b));
+    BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt);
     // set of all attributes, used later for pruning
     AttributeSet schema;
     for ( size_t i = 0; i < attComp.size(); i++ )
@@ -172,7 +182,11 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
             AttributeSet cl = closure(e.attSet);
             // closure shouldn't be entire attribute set, otherwise smaller solution exists
             if ( schema == cl )
+            {
+                BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): failed at ("
+                    << (int)aNode << ',' << (int)bNode << ") = " << cl << " for g = " << *this;
                 return false;
+            }
             for ( AttID att : diff(cl, e.attSet) )
             {
                 e.attSet[att] = true;
@@ -221,7 +235,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
     [&extendGraph,&closure,nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, int next = 0) -> bool
     {
-        BOOST_LOG_TRIVIAL(trace) << "extendGraph: g = " << g;
+        BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
             return true;
         for ( NodeID a = 0; a < nodeCount - 1; a++ )

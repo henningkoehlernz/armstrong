@@ -5,3 +5,5 @@ default:
 test:
 	g++ -o test -std=c++11 -O2 TestAgreeSetGraph.cpp AgreeSetGraph.cpp $(LINK)
 	./test
+clean:
+	rm armstrong test

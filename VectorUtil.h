@@ -4,9 +4,9 @@
 #include <bits/stdc++.h>
 
 template <typename T>
-static vector<T> operator-(const vector<T> &v, const T &value)
+static std::vector<T> operator-(const std::vector<T> &v, const T &value)
 {
-    vector<T> result;
+    std::vector<T> result;
     for ( const T &elem : v )
         if ( elem != value )
             result.push_back(elem);
@@ -14,7 +14,7 @@ static vector<T> operator-(const vector<T> &v, const T &value)
 }
 
 template <typename T>
-static bool contains(const vector<T> &v, const T &value)
+static bool contains(const std::vector<T> &v, const T &value)
 {
     for ( const T &elem : v )
         if ( elem == value )
@@ -23,7 +23,7 @@ static bool contains(const vector<T> &v, const T &value)
 }
 
 template <typename T>
-ostream& operator<<(ostream& os, const vector<T> &v)
+std::ostream& operator<<(std::ostream& os, const std::vector<T> &v)
 {
     os << "[ ";
     for ( const T& elem : v )
@@ -33,9 +33,9 @@ ostream& operator<<(ostream& os, const vector<T> &v)
 
 // for use with boost
 template <typename T>
-string str(const vector<T> &v)
+std::string str(const std::vector<T> &v)
 {
-    ostringstream os;
+    std::ostringstream os;
     os << v;
     return os.str();
 }
