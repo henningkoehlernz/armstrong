@@ -25,5 +25,20 @@ BOOST_AUTO_TEST_CASE( test_getGenerators )
 {
     const vector<AttributeSet> agreeSets = { AttributeSet("1110"), AttributeSet("0110"), AttributeSet("0111") };
     const vector<AttributeSet> generators = { AttributeSet("1110"), AttributeSet("0111") };
-    BOOST_CHECK_EQUAL(str(GenClosureOp::getGenerators(agreeSets)), str(generators));
+    BOOST_CHECK_EQUAL( str(GenClosureOp::getGenerators(agreeSets)), str(generators) );
+}
+
+BOOST_AUTO_TEST_CASE( test_AttributeSetCompare )
+{
+    BOOST_CHECK( AttributeSet("0101") <= AttributeSet("0111") );
+    BOOST_CHECK( AttributeSet("0101") <= AttributeSet("0101") );
+    BOOST_CHECK( !(AttributeSet("1011") <= AttributeSet("1101")) );
+    BOOST_CHECK( !(AttributeSet("1101") <= AttributeSet("1011")) );
+}
+
+BOOST_AUTO_TEST_CASE( test_AttributeSetDiff )
+{
+    AttributeSet a("1011"), b("0010");
+    vector<AttID> expected = { 0, 3 };
+    BOOST_CHECK_EQUAL( str(diff(a,b)), str(expected) );
 }

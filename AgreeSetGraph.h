@@ -14,6 +14,10 @@ typedef uint16_t EdgeID;
 #define MAX_NODE 4
 typedef bitset<MAX_ATT> AttributeSet;
 
+// utility functions
+bool operator<=(const AttributeSet &a, const AttributeSet &b);
+vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b);
+
 class ClosureOp
 {
 public:
@@ -69,6 +73,7 @@ public:
     friend ostream& operator<<(ostream &os, const AgreeSetGraph &g);
 };
 
+// main function
 AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets);
 
 #endif

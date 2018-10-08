@@ -8,9 +8,9 @@ bool operator<=(const AttributeSet &a, const AttributeSet &b)
     return (a & ~b).none();
 }
 
-static vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b)
+vector<AttID> diff(const AttributeSet &a, const AttributeSet &b)
 {
-    vector<NodeID> d;
+    vector<AttID> d;
     for ( int i = 0; i < a.size(); i++ )
         if ( a[i] && !b[i] )
             d.push_back(i);
@@ -122,7 +122,7 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
         extraAtt.push_back(AttLoc(att, a, b));
-    BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt);
+    BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt) << " for g = " << *this;
     // set of all attributes, used later for pruning
     AttributeSet schema;
     for ( size_t i = 0; i < attComp.size(); i++ )
@@ -233,9 +233,9 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
     // main function (uses recursive backtracking, cannot use auto due to recrusion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
-    [&extendGraph,&closure,nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, int next = 0) -> bool
+    [&extendGraph,&closure,&nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, int next = 0) -> bool
     {
-        BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
+        //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
             return true;
         for ( NodeID a = 0; a < nodeCount - 1; a++ )
@@ -251,6 +251,8 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
                         return true;
                     }
                 }
+                else
+                    BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ") for g = " << g;
         return false;
     };
     while ( nodeCount <= MAX_NODE )
