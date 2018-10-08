@@ -83,7 +83,7 @@ void AgreeSetGraph::toNodes(EdgeID e, NodeID &a, NodeID &b)
     a = e - b * (b - 1) / 2;
 }
 
-AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp &closure) : closure(closure)
+AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
 {
     size_t edgeCount = nodeCount * (nodeCount - 1) / 2;
     edges.resize(edgeCount);
@@ -94,9 +94,7 @@ AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp 
     attComp.resize(attCount, singleNodes);
 }
 
-AgreeSetGraph::AgreeSetGraph(const AgreeSetGraph &g) : closure(g.closure), edges(g.edges), attComp(g.attComp)
-{
-}
+AgreeSetGraph::AgreeSetGraph(const AgreeSetGraph &g) : edges(g.edges), attComp(g.attComp) {}
 
 const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
 {
@@ -109,7 +107,7 @@ bool AgreeSetGraph::canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const
     return !e.assigned && e.attSet <= agreeSet;
 }
 
-bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet)
+bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure)
 {
     if ( !canAssign(a, b, agreeSet) )
         return false;

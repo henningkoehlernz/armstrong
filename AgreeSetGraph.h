@@ -9,7 +9,8 @@ typedef uint8_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
-typedef bitset<64> AttributeSet;
+#define MAX_ATT 64
+typedef bitset<MAX_ATT> AttributeSet;
 
 class ClosureOp
 {
@@ -51,17 +52,14 @@ class AgreeSetGraph
     vector<EdgeData> edges;
     // store connected components for each attribute graph (these form cliques)
     vector<Partition> attComp;
-
-    // function for computing closure
-    const ClosureOp &closure;
 public:
-    AgreeSetGraph(size_t nodeCount, size_t attCount, const ClosureOp &closure);
+    AgreeSetGraph(size_t nodeCount, size_t attCount);
     AgreeSetGraph(const AgreeSetGraph &g);
     const AttributeSet& at(NodeID a, NodeID b) const;
     // quick test whether agreeSet might be assignable to (a,b)
     bool canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const;
     // try to assign agreeSet to (a,b)
-    bool assign(NodeID a, NodeID b, AttributeSet agreeSet);
+    bool assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure);
 };
 
 #endif
