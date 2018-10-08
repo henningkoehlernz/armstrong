@@ -52,6 +52,8 @@ class AgreeSetGraph
     vector<EdgeData> edges;
     // store connected components for each attribute graph (these form cliques)
     vector<Partition> attComp;
+
+    friend ostream& operator<<(ostream &os, const EdgeData &edge);
 public:
     AgreeSetGraph(size_t nodeCount, size_t attCount);
     AgreeSetGraph(const AgreeSetGraph &g);
@@ -60,6 +62,10 @@ public:
     bool canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const;
     // try to assign agreeSet to (a,b)
     bool assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure);
+
+    friend ostream& operator<<(ostream &os, const AgreeSetGraph &g);
 };
+
+AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets);
 
 #endif
