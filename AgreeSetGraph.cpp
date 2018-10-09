@@ -199,6 +199,18 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
     return true;
 }
 
+vector<vector<int>> AgreeSetGraph::toArmstrongTable() const
+{
+    const size_t nodeCount = sqrt(2 * edges.size()) + 1;
+    const size_t attCount = attComp.size();
+    vector<vector<int>> result(nodeCount, vector<int>(attCount));
+    for ( int att = 0; att < attCount; att++ )
+        for ( int node = 0; node < nodeCount; node++ )
+            // bitset tracks attributes right to left
+            result[node][att] = attComp[(attCount - 1) - att][node];
+    return result;
+}
+
 ostream& operator<<(ostream &os, const AgreeSetGraph &g)
 {
     os << "{ ";

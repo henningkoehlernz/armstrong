@@ -68,6 +68,8 @@ public:
     bool canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const;
     // try to assign agreeSet to (a,b)
     bool assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure);
+    // construct Armstrong table represented by agree-set graph
+    vector<vector<int>> toArmstrongTable() const;
 
     friend ostream& operator<<(ostream &os, const AgreeSetGraph &g);
 };

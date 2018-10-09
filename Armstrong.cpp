@@ -21,5 +21,7 @@ int main()
     // find armstrong table
     AgreeSetGraph g = findMinAgreeSetGraph(agreeSets);
     cout << g << endl;
+    for ( vector<int> row : g.toArmstrongTable() )
+        cout << row << endl;
     return 0;
 }
