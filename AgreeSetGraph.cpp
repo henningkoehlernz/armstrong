@@ -1,3 +1,5 @@
+#include <boost/log/trivial.hpp>
+
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
 

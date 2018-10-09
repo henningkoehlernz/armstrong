@@ -2,7 +2,6 @@
 #define AGREE_SET_GRAPH_H
 
 #include <bits/stdc++.h>
-#include <boost/log/trivial.hpp>
 using namespace std;
 
 typedef uint8_t NodeID;
@@ -10,8 +9,8 @@ typedef uint8_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
-#define MAX_ATT 4
-#define MAX_NODE 4
+#define MAX_ATT 8
+#define MAX_NODE 8
 typedef bitset<MAX_ATT> AttributeSet;
 
 // utility functions
