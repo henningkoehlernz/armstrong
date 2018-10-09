@@ -4,8 +4,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-typedef uint8_t NodeID;
-typedef uint8_t AttID;
+typedef uint16_t NodeID;
+typedef uint16_t AttID;
 typedef uint16_t EdgeID;
 
 // attributes are encoded as integers 0..k
@@ -59,10 +59,13 @@ private:
     // store connected components for each attribute graph (these form cliques)
     vector<Partition> attComp;
 
+    bool validate(string &msg) const;
     friend ostream& operator<<(ostream &os, const EdgeData &edge);
 public:
     AgreeSetGraph(size_t nodeCount, size_t attCount);
     AgreeSetGraph(const AgreeSetGraph &g);
+    size_t nodeCount() const;
+    size_t attributeCount() const;
     const AttributeSet& at(NodeID a, NodeID b) const;
     // quick test whether agreeSet might be assignable to (a,b)
     bool canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const;

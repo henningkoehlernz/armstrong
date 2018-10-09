@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T> &v)
 
 // for use with boost
 template <typename T>
-std::string str(const std::vector<T> &v)
+std::string str(const T &v)
 {
     std::ostringstream os;
     os << v;

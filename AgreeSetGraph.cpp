@@ -1,4 +1,5 @@
 #include <boost/log/trivial.hpp>
+#include <boost/format.hpp>
 
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
@@ -76,6 +77,26 @@ void AgreeSetGraph::toNodes(EdgeID e, NodeID &a, NodeID &b)
     a = e - (EdgeID)b * (b - 1) / 2;
 }
 
+bool AgreeSetGraph::validate(string &msg) const
+{
+    // check that attComp and edges are consistent
+    const size_t nc = nodeCount();
+    const size_t ac = attributeCount();
+    for ( AttID att = 0; att < ac; att++ )
+        for ( NodeID a = 0; a < nc - 1; a++ )
+            for ( NodeID b = a + 1; b < nc; b++ )
+            {
+                bool sameAttComp = (attComp[att][a] == attComp[att][b]);
+                bool hasAttEdge = at(a,b)[att];
+                if ( sameAttComp != hasAttEdge )
+                {
+                    msg = (boost::format("attComp!=edges for %1%@(%2%,%3%)") % att % a % b).str();
+                    return false;
+                }
+            }
+    return true;
+}
+
 AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
 {
     size_t edgeCount = nodeCount * (nodeCount - 1) / 2;
@@ -88,6 +109,16 @@ AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
 }
 
 AgreeSetGraph::AgreeSetGraph(const AgreeSetGraph &g) : edges(g.edges), attComp(g.attComp) {}
+
+size_t AgreeSetGraph::nodeCount() const
+{
+    return attComp.size() ? attComp[0].size() : 0;
+}
+
+size_t AgreeSetGraph::attributeCount() const
+{
+    return attComp.size();
+}
 
 const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
 {
@@ -115,6 +146,7 @@ static ostream& operator<<(ostream &os, const AttLoc &attLoc)
 
 bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure)
 {
+    string msg;
     /*
     if ( !canAssign(a, b, agreeSet) )
         return false;
@@ -127,7 +159,7 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
     BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt) << " for g = " << *this;
     // set of all attributes, used later for pruning
     AttributeSet schema;
-    for ( size_t i = 0; i < attComp.size(); i++ )
+    for ( size_t i = 0; i < attributeCount(); i++ )
         schema[i] = true;
     // now we can assign
     e.attSet = agreeSet;
@@ -175,6 +207,8 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
                 }
         }
         extraAtt.clear();
+        if ( !validate(msg) )
+            BOOST_LOG_TRIVIAL(error) << msg << ", attComp = " << str(attComp) << ", g = " << *this;
         // fix open edges
         for ( EdgeID eID : openEdges )
         {
@@ -201,8 +235,8 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
 
 vector<vector<int>> AgreeSetGraph::toArmstrongTable() const
 {
-    const size_t nodeCount = sqrt(2 * edges.size()) + 1;
-    const size_t attCount = attComp.size();
+    const size_t nodeCount = this->nodeCount();
+    const size_t attCount = attributeCount();
     vector<vector<int>> result(nodeCount, vector<int>(attCount));
     for ( int att = 0; att < attCount; att++ )
         for ( int node = 0; node < nodeCount; node++ )
