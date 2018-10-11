@@ -8,7 +8,7 @@
 int main()
 {
     // init logging
-    //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
+    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
     // parse agree-sets
     vector<AttributeSet> agreeSets;
     while ( !cin.eof() )

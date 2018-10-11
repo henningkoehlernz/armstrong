@@ -156,7 +156,7 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
         extraAtt.push_back(AttLoc(att, a, b));
-    BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt) << " for g = " << *this;
+    BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt) << " for g = " << *this << ", attComp = " << str(attComp);
     // set of all attributes, used later for pruning
     AttributeSet schema;
     for ( size_t i = 0; i < attributeCount(); i++ )
@@ -176,17 +176,19 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
             if ( p[attLoc.a] == p[attLoc.b] )
                 continue;
             // find components to join
+            const NodeID aVal = p[attLoc.a], bVal = p[attLoc.b];
             vector<NodeID> aComp, bComp;
             for ( NodeID i = 0; i < p.size(); i++ )
             {
-                if ( p[i] == p[attLoc.a] )
+                if ( p[i] == aVal )
                     aComp.push_back(i);
-                else if ( p[i] == p[attLoc.b] )
+                else if ( p[i] == bVal )
                 {
                     bComp.push_back(i);
-                    p[attLoc.b] = p[attLoc.a]; // merge partitions
+                    p[i] = aVal; // merge partitions
                 }
             }
+            BOOST_LOG_TRIVIAL(trace) << "merging " << str(aComp) << " and " << str(bComp) << " for att=" << attLoc.att;
             // add att to all edges between components
             for ( NodeID aNode : aComp )
                 for ( NodeID bNode : bComp )
