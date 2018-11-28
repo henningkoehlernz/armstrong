@@ -1,30 +1,11 @@
 #include <bits/stdc++.h>
+#include <boost/log/trivial.hpp>
 #include <boost/functional/hash.hpp>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/tokenizer.hpp>
 
-using namespace std;
-
-typedef vector<size_t> Row;
-typedef vector<Row> Table;
-typedef boost::dynamic_bitset<> AttSet;
-
-// implement hash function for dynamic_bitset (still not part of boost)
-namespace boost {
-    template <typename Block, typename Alloc>
-    std::size_t hash_value(boost::dynamic_bitset<Block, Alloc> const& bs)
-    {
-        size_t seed = 0;
-        std::vector<Block> blocks(bs.num_blocks());
-        to_block_range(bs, blocks.begin());
-        boost::hash_range(seed, blocks.begin(), blocks.end());
-        return seed;
-    }
-}
+#include "AgreeSetMiner.h"
+#include "BoostUtil.h"
 
 //----------------- IndexSet ------------------------------
-
-typedef vector<size_t> IndexSet;
 
 IndexSet indexSetOf(const AttSet &x)
 {
@@ -37,21 +18,9 @@ IndexSet indexSetOf(const AttSet &x)
 
 //----------------- ClosureCalculator ---------------------
 
-typedef vector<size_t> IndexSet;
-
-
-class ClosureCalculator
+ClosureCalculator::ClosureCalculator(const Table &table, size_t columnCount) : table(table), columnCount(columnCount ? columnCount : table[0].size())
 {
-    const Table &table;
-    const size_t columnCount;
-    map<size_t, AttSet> memo;
-
-    static size_t subHash(const Row &row, const IndexSet &x);
-public:
-    ClosureCalculator(const Table &table, size_t columnCount = 0) : table(table), columnCount(columnCount ? columnCount : table[0].size()) {}
-    AttSet operator()(const AttSet &x);
-    size_t columns() const { return columnCount; }
-};
+}
 
 size_t ClosureCalculator::subHash(const Row &row, const IndexSet &x)
 {
@@ -90,6 +59,11 @@ AttSet ClosureCalculator::operator()(const AttSet &x)
                 closure[col] &= rowRefs[i].row->at(col) == rowRefs[i-1].row->at(col);
     memo[xHash] = closure;
     return closure;
+}
+
+size_t ClosureCalculator::columns() const
+{
+    return columnCount;
 }
 
 //----------------- main functions ------------------------
@@ -131,6 +105,7 @@ vector<AttSet> getMaxAntiLhs(size_t rhs, ClosureCalculator &closure)
                 }
             // we found a new maximal anti-LHS
             maxAntiLhs.push_back(x);
+            BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << "(" << rhs << "): " << x;
             // update transversal
             AttSet xComplement(x);
             xComplement.flip().set(rhs, false);
@@ -174,12 +149,14 @@ vector<AttSet> getMaxAntiLhs(size_t rhs, ClosureCalculator &closure)
     return maxAntiLhs;
 }
 
-int main()
+vector<AttSet> getGenerators(ClosureCalculator &closure)
 {
-    string s = "Field 1,\"putting quotes around fields, allows commas\",Field 3";
-    boost::tokenizer<boost::escaped_list_separator<char>> tok(s);
-    for ( auto it = tok.begin(); it != tok.end(); ++it )
-    {
-        cout << *it << "\n";
-    }
+    size_t columns = closure.columns();
+    unordered_set<AttSet> generators;
+    for ( size_t rhs = 0; rhs < columns; ++rhs )
+        for ( AttSet const& antiLhs : getMaxAntiLhs(rhs, closure) )
+            generators.insert(antiLhs);
+    vector<AttSet> result;
+    result.insert(result.end(), generators.begin(), generators.end());
+    return result;
 }
