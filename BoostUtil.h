@@ -3,6 +3,7 @@
 
 #include <bits/stdc++.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/functional/hash.hpp>
 
 namespace boost
 {
