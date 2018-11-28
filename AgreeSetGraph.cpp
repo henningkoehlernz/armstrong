@@ -14,7 +14,7 @@ bool operator<=(const AttributeSet &a, const AttributeSet &b)
 vector<AttID> diff(const AttributeSet &a, const AttributeSet &b)
 {
     vector<AttID> d;
-    for ( int i = 0; i < a.size(); i++ )
+    for ( size_t i = 0; i < a.size(); i++ )
         if ( a[i] && !b[i] )
             d.push_back(i);
     return d;
@@ -103,7 +103,7 @@ AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
     edges.resize(edgeCount);
     // partitions all consist of single nodes
     Partition singleNodes(nodeCount);
-    for ( int i = 0; i < nodeCount; i++ )
+    for ( size_t i = 0; i < nodeCount; i++ )
         singleNodes[i] = i;
     attComp.resize(attCount, singleNodes);
 }
@@ -240,8 +240,8 @@ vector<vector<int>> AgreeSetGraph::toArmstrongTable() const
     const size_t nodeCount = this->nodeCount();
     const size_t attCount = attributeCount();
     vector<vector<int>> result(nodeCount, vector<int>(attCount));
-    for ( int att = 0; att < attCount; att++ )
-        for ( int node = 0; node < nodeCount; node++ )
+    for ( size_t att = 0; att < attCount; att++ )
+        for ( size_t node = 0; node < nodeCount; node++ )
             // bitset tracks attributes right to left
             result[node][att] = attComp[(attCount - 1) - att][node];
     return result;
@@ -283,7 +283,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
     // main function (uses recursive backtracking, cannot use auto due to recrusion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
-    [&extendGraph,&closure,&nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, int next = 0) -> bool
+    [&extendGraph,&closure,&nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
     {
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
