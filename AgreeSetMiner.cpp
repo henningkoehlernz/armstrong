@@ -96,12 +96,14 @@ vector<AttSet> getMaxAntiLhs(size_t rhs, ClosureCalculator &closure)
             // maximize x, starting with cl
             x = cl;
             for ( size_t c = 0; c < columns; c++ )
-                if ( c != rhs && !cl[c] )
+                if ( c != rhs && !x[c] )
                 {
                     x[c] = true;
                     cl = closure(x);
                     if ( cl[rhs] )
                         x[c] = false;
+                    else
+                        x = cl;
                 }
             // we found a new maximal anti-LHS
             maxAntiLhs.push_back(x);
