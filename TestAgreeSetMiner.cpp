@@ -1,28 +1,31 @@
 #define BOOST_TEST_MODULE TestAgreeSetMiner
-#include <boost/test/unit_test.hpp>
-#include "AgreeSetMiner.h"
 #include "VectorUtil.h"
+#include "AgreeSetMiner.h"
 #include "BoostUtil.h"
+#include <boost/dynamic_bitset.hpp>
+#include <boost/test/unit_test.hpp>
+
+#define AS(x) AttSet(string(#x))
+#define ASP(x,y) { AS(x), AS(y) }
 
 static Table table = {
-    { 0, 0, 0 },
-    { 0, 0, 1 },
-    { 1, 0, 0 },
-    { 2, 2, 2 }
+    { 0, 0, 0, 0 },
+    { 0, 0, 1, 0 },
+    { 1, 0, 0, 0 },
+    { 2, 2, 2, 0 }
 };
 static ClosureCalculator closure(table);
 
 BOOST_AUTO_TEST_CASE( test_ClosureCalculator )
 {
     BOOST_CHECK_EQUAL( closure.columns(), table[0].size() );
-#define ASP(x,y) { AttSet(string(#x)), AttSet(string(#y)) }
     map<AttSet,AttSet> setToClosure = {
-        ASP(000,000),
-        ASP(001,011),
-        ASP(010,010),
-        ASP(100,110)
+        ASP(0000,1000),
+        ASP(0001,1011),
+        ASP(0010,1010),
+        ASP(0100,1110),
+        ASP(1000,1000)
     };
-#undef ASP
     for ( auto const& mapping : setToClosure )
         BOOST_CHECK_EQUAL( closure(mapping.first), mapping.second );
 }
@@ -30,7 +33,12 @@ BOOST_AUTO_TEST_CASE( test_ClosureCalculator )
 BOOST_AUTO_TEST_CASE( test_getGenerators )
 {
     vector<AttSet> gen = getGenerators(closure);
-    BOOST_CHECK( contains(gen, AttSet(string("011"))) );
-    BOOST_CHECK( contains(gen, AttSet(string("110"))) );
-    BOOST_CHECK_EQUAL( gen.size(), 2 );
+    vector<AttSet> expected = {
+        AS(1011),
+        AS(1110),
+        AS(1000)
+    };
+    sort(gen.begin(), gen.end());
+    sort(expected.begin(), expected.end());
+    BOOST_CHECK_EQUAL( gen, expected );
 }
