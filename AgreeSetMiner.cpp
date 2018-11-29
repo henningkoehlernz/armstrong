@@ -1,9 +1,11 @@
-#include <bits/stdc++.h>
+#include <vector>
 #include <boost/log/trivial.hpp>
 #include <boost/functional/hash.hpp>
 
 #include "AgreeSetMiner.h"
 #include "BoostUtil.h"
+
+using namespace std;
 
 //----------------- IndexSet ------------------------------
 

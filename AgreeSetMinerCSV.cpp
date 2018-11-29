@@ -1,6 +1,11 @@
 #include <boost/functional/hash.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/log/trivial.hpp>
+#include <iostream>
 #include "AgreeSetMiner.h"
+#include "VectorUtil.h"
+
+using namespace std;
 
 void read_csv(Table &t, istream &in)
 {
@@ -21,6 +26,7 @@ int main(int argc, char *argv[])
     // read table from stdin
     Table table;
     read_csv(table, cin);
+    BOOST_LOG_TRIVIAL(debug) << "table = " << table << endl;
     // find generating agree-sets
     ClosureCalculator closure(table);
     vector<AttSet> generators = getGenerators(closure);

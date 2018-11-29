@@ -1,7 +1,7 @@
 #ifndef VECTOR_UTIL_H
 #define VECTOR_UTIL_H
 
-#include <bits/stdc++.h>
+#include <vector>
 
 namespace std
 {

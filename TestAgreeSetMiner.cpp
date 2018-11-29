@@ -1,9 +1,13 @@
 #define BOOST_TEST_MODULE TestAgreeSetMiner
+#include <boost/dynamic_bitset.hpp>
+#include <boost/test/unit_test.hpp>
+#include <map>
+
 #include "VectorUtil.h"
 #include "AgreeSetMiner.h"
 #include "BoostUtil.h"
-#include <boost/dynamic_bitset.hpp>
-#include <boost/test/unit_test.hpp>
+
+using namespace std;
 
 #define AS(x) AttSet(string(#x))
 #define ASP(x,y) { AS(x), AS(y) }
