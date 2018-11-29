@@ -1,6 +1,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <iostream>
 #include "AgreeSetMiner.h"
 #include "VectorUtil.h"
@@ -23,6 +24,7 @@ void read_csv(Table &t, istream &in)
 
 int main(int argc, char *argv[])
 {
+    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::warning );
     // read table from stdin
     Table table;
     read_csv(table, cin);

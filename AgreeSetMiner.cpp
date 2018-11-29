@@ -4,6 +4,7 @@
 
 #include "AgreeSetMiner.h"
 #include "BoostUtil.h"
+#include "VectorUtil.h"
 
 using namespace std;
 
@@ -28,7 +29,8 @@ size_t ClosureCalculator::subHash(const Row &row, const IndexSet &x)
 {
     size_t seed = 0;
     for ( size_t index : x )
-        boost::hash_combine(seed, row[index]);
+        // see https://stackoverflow.com/questions/19966041/getting-too-many-collisions-with-hash-combine
+        boost::hash_combine(seed, row[index] * 2654435761);
     return seed;
 }
 
@@ -36,7 +38,10 @@ AttSet ClosureCalculator::operator()(const AttSet &x)
 {
     size_t xHash = boost::hash_value(x);
     if ( memo.count(xHash) )
+    {
+        BOOST_LOG_TRIVIAL(trace) << "closure(" << x << ") = " << memo[xHash] << " (memoized via " << xHash << ")";
         return memo[xHash];
+    }
     // hash rows based on values in x & sort by hash
     struct RowRef
     {
@@ -57,9 +62,15 @@ AttSet ClosureCalculator::operator()(const AttSet &x)
     closure.flip();
     for ( size_t i = 1; i < table.size(); i++ )
         if ( rowRefs[i].hashValue == rowRefs[i-1].hashValue )
+        {
+            BOOST_LOG_TRIVIAL(trace) << "closure(" << x << "): comparing\n" << *rowRefs[i-1].row << " with\n" << *rowRefs[i].row;
             for ( size_t col = 0; col < columnCount; col++ )
-                closure[col] &= rowRefs[i].row->at(col) == rowRefs[i-1].row->at(col);
+                if ( closure[col] )
+                    closure[col] = rowRefs[i].row->at(col) == rowRefs[i-1].row->at(col);
+            assert( x.is_subset_of(closure) );
+        }
     memo[xHash] = closure;
+    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << "(" << x << ") = " << closure;
     return closure;
 }
 
@@ -149,6 +160,7 @@ vector<AttSet> getMaxAntiLhs(size_t rhs, ClosureCalculator &closure)
                     trans.push_back(tNew);
             }
         }
+        BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << "(" << rhs << "): trans = " << trans;
     }
     return maxAntiLhs;
 }

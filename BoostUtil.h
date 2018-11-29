@@ -10,10 +10,19 @@ namespace boost
     template <typename Block, typename Alloc>
     std::size_t hash_value(boost::dynamic_bitset<Block, Alloc> const& bs)
     {
-        size_t seed = 0;
+        //static const size_t MOD = 9073277401557776713LL; // prime slightly below 2^63 with "random" bit-pattern
+        size_t seed = 614889782588491517LL; // some "random" prime below MOD
         std::vector<Block> blocks(bs.num_blocks());
         to_block_range(bs, blocks.begin());
         boost::hash_range(seed, blocks.begin(), blocks.end());
+        /*
+        for ( int i = bs.size() - 1; i >= 0; --i )
+        {
+            seed = (seed << 1) % MOD;
+            if ( bs[i] )
+                seed++;
+        }
+        */
         return seed;
     }
 }
