@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define AS(x) AttSet(string(#x))
+#define AS(x) AttributeSet(string(#x))
 #define ASP(x,y) { AS(x), AS(y) }
 
 static Table table = {
@@ -23,7 +23,7 @@ static ClosureCalculator closure(table);
 BOOST_AUTO_TEST_CASE( test_ClosureCalculator )
 {
     BOOST_CHECK_EQUAL( closure.columns(), table[0].size() );
-    map<AttSet,AttSet> setToClosure = {
+    map<AttributeSet,AttributeSet> setToClosure = {
         ASP(0000,1000),
         ASP(0001,1011),
         ASP(0010,1010),
@@ -36,8 +36,8 @@ BOOST_AUTO_TEST_CASE( test_ClosureCalculator )
 
 BOOST_AUTO_TEST_CASE( test_getGenerators )
 {
-    vector<AttSet> gen = getGenerators(closure);
-    vector<AttSet> expected = {
+    vector<AttributeSet> gen = getGenerators(closure);
+    vector<AttributeSet> expected = {
         AS(1011),
         AS(1110),
         AS(1000)

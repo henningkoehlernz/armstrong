@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
     BOOST_LOG_TRIVIAL(debug) << "table = " << table << endl;
     // find generating agree-sets
     ClosureCalculator closure(table);
-    vector<AttSet> generators = getGenerators(closure);
+    vector<AttributeSet> generators = getGenerators(closure);
     // print to stdout
-    for ( const AttSet &s : generators )
+    for ( const AttributeSet &s : generators )
         cout << s << endl;
 }

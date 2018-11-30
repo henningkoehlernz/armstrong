@@ -2,6 +2,7 @@
 #define VECTOR_UTIL_H
 
 #include <vector>
+#include <sstream>
 
 namespace std
 {

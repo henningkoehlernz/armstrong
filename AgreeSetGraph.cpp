@@ -1,8 +1,11 @@
 #include <boost/log/trivial.hpp>
 #include <boost/format.hpp>
+#include <unordered_set>
 
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
+
+using namespace std;
 
 //----------------- Util ------------------------
 
@@ -36,7 +39,7 @@ vector<AttributeSet> GenClosureOp::getGenerators(const vector<AttributeSet> &agr
 
 AttributeSet GenClosureOp::operator()(const AttributeSet &a) const
 {
-    AttributeSet closure;
+    AttributeSet closure(a.size());
     closure.flip();
     for ( const AttributeSet &gen : generators )
         if ( a <= gen )
@@ -263,23 +266,13 @@ ostream& operator<<(ostream &os, const AgreeSetGraph &g)
 
 AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
 {
-    auto getMaxAtt = [](const vector<AttributeSet> &attSets) -> int
-    {
-        AttributeSet setUnion;
-        for ( const AttributeSet &s : attSets )
-            setUnion |= s;
-        for ( int i = MAX_ATT - 1; i >= 0; i-- )
-            if ( setUnion[i] )
-                return i;
-        return -1;
-    };
     // reduce to generators
     const vector<AttributeSet> generators = GenClosureOp::getGenerators(agreeSets);
     BOOST_LOG_TRIVIAL(debug) << "agreeSets = " << str(agreeSets);
     BOOST_LOG_TRIVIAL(debug) << "generators = " << str(generators);
     const GenClosureOp closure(generators);
     // find initial graph parameters
-    const size_t attCount = getMaxAtt(generators) + 1;
+    const size_t attCount = generators.empty() ? 0 : generators[0].size();
     size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
     // main function (uses recursive backtracking, cannot use auto due to recrusion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =

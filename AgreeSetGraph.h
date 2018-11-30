@@ -1,21 +1,19 @@
 #ifndef AGREE_SET_GRAPH_H
 #define AGREE_SET_GRAPH_H
 
-#include <bits/stdc++.h>
-using namespace std;
+#include <string>
+#include <iostream>
+#include "AgreeSetTypes.h"
 
 typedef uint16_t NodeID;
 typedef uint16_t AttID;
 typedef uint16_t EdgeID;
 
-// attributes are encoded as integers 0..k
-#define MAX_ATT 8
-#define MAX_NODE 8
-typedef bitset<MAX_ATT> AttributeSet;
+#define MAX_NODE 12
 
 // utility functions
 bool operator<=(const AttributeSet &a, const AttributeSet &b);
-vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b);
+std::vector<NodeID> diff(const AttributeSet &a, const AttributeSet &b);
 
 class ClosureOp
 {
@@ -25,11 +23,11 @@ public:
 
 class GenClosureOp : public ClosureOp
 {
-    vector<AttributeSet> generators;
+    std::vector<AttributeSet> generators;
 public:
-    static vector<AttributeSet> getGenerators(const vector<AttributeSet> &agreeSets);
+    static std::vector<AttributeSet> getGenerators(const std::vector<AttributeSet> &agreeSets);
     virtual AttributeSet operator()(const AttributeSet &a) const;
-    GenClosureOp(const vector<AttributeSet> &generators);
+    GenClosureOp(const std::vector<AttributeSet> &generators);
     GenClosureOp(const GenClosureOp &op);
 };
 
@@ -52,15 +50,15 @@ private:
         EdgeData();
         EdgeData(const EdgeData &e);
     };
-    typedef vector<NodeID> Partition;
+    typedef std::vector<NodeID> Partition;
 
     // agree-sets associated with edges
-    vector<EdgeData> edges;
+    std::vector<EdgeData> edges;
     // store connected components for each attribute graph (these form cliques)
-    vector<Partition> attComp;
+    std::vector<Partition> attComp;
 
-    bool validate(string &msg) const;
-    friend ostream& operator<<(ostream &os, const EdgeData &edge);
+    bool validate(std::string &msg) const;
+    friend std::ostream& operator<<(std::ostream &os, const EdgeData &edge);
 public:
     AgreeSetGraph(size_t nodeCount, size_t attCount);
     AgreeSetGraph(const AgreeSetGraph &g);
@@ -72,12 +70,12 @@ public:
     // try to assign agreeSet to (a,b)
     bool assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure);
     // construct Armstrong table represented by agree-set graph
-    vector<vector<int>> toArmstrongTable() const;
+    std::vector<std::vector<int>> toArmstrongTable() const;
 
-    friend ostream& operator<<(ostream &os, const AgreeSetGraph &g);
+    friend std::ostream& operator<<(std::ostream &os, const AgreeSetGraph &g);
 };
 
 // main function
-AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets);
+AgreeSetGraph findMinAgreeSetGraph(const std::vector<AttributeSet> &agreeSets);
 
 #endif
