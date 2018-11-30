@@ -7,11 +7,14 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    size_t max_agree_set = 0;
+    if ( argc > 1 )
+        max_agree_set = atoi(argv[1]);
     // init logging
-    //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
-    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
+    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
+    //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
     // parse agree-sets
     vector<AttributeSet> agreeSets;
     size_t line_counter = 0;
@@ -32,7 +35,13 @@ int main()
         else
             break;
     }
-    BOOST_LOG_TRIVIAL(info) << "finding Armstrong table for " << agreeSets.size() << " agree-sets";
+    if ( max_agree_set && agreeSets.size() > max_agree_set )
+    {
+        BOOST_LOG_TRIVIAL(info) << "finding Armstrong table for " << max_agree_set << "/" << agreeSets.size() << " agree-sets";
+        agreeSets.resize(max_agree_set);
+    }
+    else
+        BOOST_LOG_TRIVIAL(info) << "finding Armstrong table for " << agreeSets.size() << " agree-sets";
     // find armstrong table
     AgreeSetGraph g = findMinAgreeSetGraph(agreeSets);
     cout << g << endl;

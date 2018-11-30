@@ -47,7 +47,7 @@ private:
     {
         AttributeSet attSet;
         bool assigned; // does the edge store an assigned agree-set?
-        EdgeData();
+        EdgeData(size_t size);
         EdgeData(const EdgeData &e);
     };
     typedef std::vector<NodeID> Partition;
@@ -57,6 +57,7 @@ private:
     // store connected components for each attribute graph (these form cliques)
     std::vector<Partition> attComp;
 
+    // validate that graph is consistent, returning error message in msg
     bool validate(std::string &msg) const;
     friend std::ostream& operator<<(std::ostream &os, const EdgeData &edge);
 public:

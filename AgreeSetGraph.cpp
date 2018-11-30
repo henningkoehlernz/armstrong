@@ -16,6 +16,7 @@ bool operator<=(const AttributeSet &a, const AttributeSet &b)
 
 vector<AttID> diff(const AttributeSet &a, const AttributeSet &b)
 {
+    assert(a.size() == b.size());
     vector<AttID> d;
     for ( size_t i = 0; i < a.size(); i++ )
         if ( a[i] && !b[i] )
@@ -52,7 +53,7 @@ GenClosureOp::GenClosureOp(const GenClosureOp &op) : generators(op.generators) {
 
 //----------------- EdgeData --------------------
 
-AgreeSetGraph::EdgeData::EdgeData() : assigned(false) {}
+AgreeSetGraph::EdgeData::EdgeData(size_t size) : attSet(size), assigned(false) {}
 AgreeSetGraph::EdgeData::EdgeData(const EdgeData &e) : attSet(e.attSet), assigned(e.assigned) {}
 
 ostream& operator<<(ostream &os, const AgreeSetGraph::EdgeData &edge)
@@ -103,7 +104,7 @@ bool AgreeSetGraph::validate(string &msg) const
 AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
 {
     size_t edgeCount = nodeCount * (nodeCount - 1) / 2;
-    edges.resize(edgeCount);
+    edges.resize(edgeCount, EdgeData(attCount));
     // partitions all consist of single nodes
     Partition singleNodes(nodeCount);
     for ( size_t i = 0; i < nodeCount; i++ )
@@ -149,7 +150,7 @@ static ostream& operator<<(ostream &os, const AttLoc &attLoc)
 
 bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure)
 {
-    string msg;
+    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << "(" << (int)a << ',' << (int)b << ',' << agreeSet << ")";
     /*
     if ( !canAssign(a, b, agreeSet) )
         return false;
@@ -159,11 +160,10 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
         extraAtt.push_back(AttLoc(att, a, b));
-    BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): extraAtt = " << str(extraAtt) << " for g = " << *this << ", attComp = " << str(attComp);
+    BOOST_LOG_TRIVIAL(trace) << "extraAtt = " << str(extraAtt) << " for g = " << *this << ", attComp = " << str(attComp);
     // set of all attributes, used later for pruning
-    AttributeSet schema;
-    for ( size_t i = 0; i < attributeCount(); i++ )
-        schema[i] = true;
+    AttributeSet schema(attributeCount());
+    schema.flip();
     // now we can assign
     e.attSet = agreeSet;
     e.assigned = true;
@@ -202,8 +202,7 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
                         continue;
                     if ( e.assigned )
                     {
-                        BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): failed at ("
-                            << (int)aNode << ',' << (int)bNode << ") += " << (int)attLoc.att << " for g = " << *this;
+                        BOOST_LOG_TRIVIAL(trace) << "failed at (" << (int)aNode << ',' << (int)bNode << ") += " << (int)attLoc.att << " for g = " << *this;
                         return false; // cannot extend assigned edges
                     }
                     e.attSet[attLoc.att] = true;
@@ -212,8 +211,11 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
                 }
         }
         extraAtt.clear();
-        if ( !validate(msg) )
-            BOOST_LOG_TRIVIAL(error) << msg << ", attComp = " << str(attComp) << ", g = " << *this;
+        {
+            string msg;
+            if ( !validate(msg) )
+                BOOST_LOG_TRIVIAL(error) << msg << ", attComp = " << str(attComp) << ", g = " << *this;
+        }
         // fix open edges
         for ( EdgeID eID : openEdges )
         {
@@ -264,6 +266,27 @@ ostream& operator<<(ostream &os, const AgreeSetGraph &g)
 
 //----------------- main function ---------------
 
+class ProgressCounter
+{
+    size_t maxProgress;
+public:
+    void update(size_t progress)
+    {
+        while ( progress > maxProgress )
+            cerr << (++maxProgress % 5 ? "." : to_string(maxProgress));
+    }
+    void reset()
+    {
+        if ( maxProgress )
+        {
+            maxProgress = 0;
+            cerr << endl;
+        }
+    }
+    ProgressCounter() : maxProgress(0) {}
+    ~ProgressCounter() { reset(); }
+};
+
 AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
 {
     // reduce to generators
@@ -274,10 +297,12 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     // find initial graph parameters
     const size_t attCount = generators.empty() ? 0 : generators[0].size();
     size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
+    ProgressCounter progress;
     // main function (uses recursive backtracking, cannot use auto due to recrusion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
-    [&extendGraph,&closure,&nodeCount](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
+    [&extendGraph,&closure,&nodeCount,&progress](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
     {
+        progress.update(next);
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
             return true;
@@ -300,7 +325,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     };
     while ( nodeCount <= MAX_NODE )
     {
-        BOOST_LOG_TRIVIAL(debug) << "NodeCount = " << nodeCount;
+        BOOST_LOG_TRIVIAL(info) << "NodeCount = " << nodeCount;
         AgreeSetGraph g(nodeCount, attCount);
         // first generator can always be assigned
         if ( generators.size() > 0 )
@@ -309,6 +334,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
             return g;
         // failure - try with more nodes
         nodeCount++;
+        progress.reset();
     }
     exit(1);
 }
