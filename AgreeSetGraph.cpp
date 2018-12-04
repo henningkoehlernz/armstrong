@@ -81,6 +81,22 @@ void AgreeSetGraph::toNodes(EdgeID e, NodeID &a, NodeID &b)
     a = e - (EdgeID)b * (b - 1) / 2;
 }
 
+void AgreeSetGraph::setIsoTwoPlus(NodeID node)
+{
+    switch ( isoType[node] )
+    {
+        case Connected::Pre:
+            isoType[node] = isoType[node-1] = Connected::TwoPlus;
+            break;
+        case Connected::Post:
+            isoType[node] = isoType[node+1] = Connected::TwoPlus;
+            break;
+        default:
+            isoType[node] = Connected::TwoPlus;
+            break;
+    }
+}
+
 bool AgreeSetGraph::validate(string &msg) const
 {
     // check that attComp and edges are consistent
@@ -101,7 +117,7 @@ bool AgreeSetGraph::validate(string &msg) const
     return true;
 }
 
-AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
+AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount) : isoType(nodeCount, Connected::None)
 {
     size_t edgeCount = nodeCount * (nodeCount - 1) / 2;
     edges.resize(edgeCount, EdgeData(attCount));
@@ -112,7 +128,7 @@ AgreeSetGraph::AgreeSetGraph(size_t nodeCount, size_t attCount)
     attComp.resize(attCount, singleNodes);
 }
 
-AgreeSetGraph::AgreeSetGraph(const AgreeSetGraph &g) : edges(g.edges), attComp(g.attComp) {}
+AgreeSetGraph::AgreeSetGraph(const AgreeSetGraph &g) : edges(g.edges), attComp(g.attComp), isoType(g.isoType) {}
 
 size_t AgreeSetGraph::nodeCount() const
 {
@@ -132,7 +148,16 @@ const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
 bool AgreeSetGraph::canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const
 {
     const EdgeData &e = edges[toEdge(a, b)];
-    return !e.assigned && e.attSet <= agreeSet;
+    if ( e.assigned || !(e.attSet <= agreeSet) )
+        return false;
+    // avoid isomorphic cases - only use smallest representative
+    if ( isoType[a] == Connected::Pre || isoType[a] == Connected::Pre )
+        return false;
+    // special case of connecting two isolated nodes
+    assert(a < b);
+    if ( b > 1 && isoType[b-1] == Connected::None )
+        return a == b-1 && isoType[b-2] != Connected::None;
+    return true;
 }
 
 // Attribute + Location (=edge) it was added
@@ -237,6 +262,19 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
             }
         }
     }
+    // update isoType to account for new edge
+    if ( isoType[a] == Connected::None )
+    {
+        assert(b == a+1);
+        assert(isoType[b] == Connected::None);
+        isoType[a] = Connected::Post;
+        isoType[b] = Connected::Pre;
+    }
+    else
+    {
+        setIsoTwoPlus(a);
+        setIsoTwoPlus(b);
+    }
     return true;
 }
 
@@ -298,7 +336,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     const size_t attCount = generators.empty() ? 0 : generators[0].size();
     size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
     ProgressCounter progress;
-    // main function (uses recursive backtracking, cannot use auto due to recrusion)
+    // main function (uses recursive backtracking, cannot use auto due to recursion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
     [&extendGraph,&closure,&nodeCount,&progress](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
     {
@@ -306,10 +344,9 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
             return true;
-        // TODO: Avoid isophomorphic scenarios. E.g. second edge should be either 0-2 or 2-3, nothing else.
-        // Two nodes are isomorphic iff (1) they both have degree 0, or (2) they are adjacent with degree 1.
-        for ( NodeID a = 0; a < nodeCount - 1; a++ )
-            for ( NodeID b = a + 1; b < nodeCount; b++ )
+        for ( NodeID b = 1; b < nodeCount; b++ )
+        {
+            for ( NodeID a = 0; a < b; a++ )
                 // quick & easy test before we take a copy
                 if ( g.canAssign(a, b, gen[next]) )
                 {
@@ -323,6 +360,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
                 }
                 else
                     BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ") for g = " << g;
+        }
         return false;
     };
     while ( nodeCount <= MAX_NODE )

@@ -51,14 +51,21 @@ private:
         EdgeData(const EdgeData &e);
     };
     typedef std::vector<NodeID> Partition;
+    // Isomorphism type of nodes
+    enum class Connected : int8_t { None=0, TwoPlus=2, Pre=-1, Post=1 };
 
     // agree-sets associated with edges
     std::vector<EdgeData> edges;
     // store connected components for each attribute graph (these form cliques)
     std::vector<Partition> attComp;
+    // store if nodes have isomorphic nodes (for pruning)
+    std::vector<Connected> isoType;
 
+    // update isomorphism type for node and isomorphic nodes to 2+
+    void setIsoTwoPlus(NodeID node);
     // validate that graph is consistent, returning error message in msg
     bool validate(std::string &msg) const;
+
     friend std::ostream& operator<<(std::ostream &os, const EdgeData &edge);
 public:
     AgreeSetGraph(size_t nodeCount, size_t attCount);
