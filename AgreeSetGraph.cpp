@@ -306,6 +306,8 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
             return true;
+        // TODO: Avoid isophomorphic scenarios. E.g. second edge should be either 0-2 or 2-3, nothing else.
+        // Two nodes are isomorphic iff (1) they both have degree 0, or (2) they are adjacent with degree 1.
         for ( NodeID a = 0; a < nodeCount - 1; a++ )
             for ( NodeID b = a + 1; b < nodeCount; b++ )
                 // quick & easy test before we take a copy

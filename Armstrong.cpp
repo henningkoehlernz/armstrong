@@ -4,6 +4,7 @@
 
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
+#include "BoostUtil.h"
 
 using namespace std;
 
@@ -24,6 +25,7 @@ int main(int argc, char* argv[])
         if ( cin >> agreeSet )
         {
             line_counter++;
+            boost::reverse(agreeSet); // bits are stored in left-to-right order
             if ( !agreeSet.none() && !agreeSet.all() && !contains(agreeSets, agreeSet) )
             {
                 agreeSets.push_back(agreeSet);

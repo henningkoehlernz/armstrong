@@ -25,6 +25,17 @@ namespace boost
         */
         return seed;
     }
+
+    template <typename Block, typename Alloc>
+    void reverse(boost::dynamic_bitset<Block, Alloc> & bs)
+    {
+        for ( size_t i = 0, swap = bs.size() - 1; i < swap; ++i, --swap )
+            if ( bs[i] != bs[swap] )
+            {
+                bs.flip(i);
+                bs.flip(swap);
+            }
+    }
 }
 
 namespace std
