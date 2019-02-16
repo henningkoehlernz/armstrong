@@ -1,18 +1,47 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/program_options.hpp>
 
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
 #include "BoostUtil.h"
 
 using namespace std;
+namespace po = boost::program_options;
 
 int main(int argc, char* argv[])
 {
     size_t max_agree_set = 0;
-    if ( argc > 1 )
-        max_agree_set = atoi(argv[1]);
+    unsigned int max_backtrack = 0;
+
+    // extract command-line arguments
+    try {
+        po::options_description desc("Options");
+        desc.add_options()
+            ("help,h", "show options (this)")
+            ("ag,a", po::value<size_t>(), "set limit on agree-sets")
+            ("bt,b", po::value<unsigned int>(), "set limit on backtracking steps")
+        ;
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+
+        if (vm.count("help"))
+        {
+            cout << desc << endl;
+            return 0;
+        }
+        if ( vm.count("ag") )
+            max_agree_set = vm["ag"].as<size_t>();
+        if ( vm.count("bt") )
+            max_backtrack = vm["bt"].as<unsigned int>();
+    }
+    catch(exception& e) {
+        cerr << e.what() << "\n";
+        return 1;
+    }
+
     // init logging
     boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
     //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
@@ -45,7 +74,7 @@ int main(int argc, char* argv[])
     else
         BOOST_LOG_TRIVIAL(info) << "finding Armstrong table for " << agreeSets.size() << " agree-sets";
     // find armstrong table
-    AgreeSetGraph g = findMinAgreeSetGraph(agreeSets);
+    AgreeSetGraph g = findMinAgreeSetGraph(agreeSets, max_backtrack);
     cout << g << endl;
     for ( vector<int> row : g.toArmstrongTable() )
         cout << row << endl;

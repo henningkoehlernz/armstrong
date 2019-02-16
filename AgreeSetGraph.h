@@ -3,13 +3,14 @@
 
 #include <string>
 #include <iostream>
+#include <limits.h>
 #include "AgreeSetTypes.h"
 
 typedef uint16_t NodeID;
 typedef uint16_t AttID;
 typedef uint16_t EdgeID;
 
-#define MAX_NODE 12
+#define MAX_NODE 128
 
 // utility functions
 bool operator<=(const AttributeSet &a, const AttributeSet &b);
@@ -83,7 +84,7 @@ public:
     friend std::ostream& operator<<(std::ostream &os, const AgreeSetGraph &g);
 };
 
-// main function
-AgreeSetGraph findMinAgreeSetGraph(const std::vector<AttributeSet> &agreeSets);
+// main function, btLimit imposes limit on number of back-tracking steps
+AgreeSetGraph findMinAgreeSetGraph(const std::vector<AttributeSet> &agreeSets, unsigned int btLimit = UINT_MAX);
 
 #endif

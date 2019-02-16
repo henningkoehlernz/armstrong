@@ -325,7 +325,7 @@ public:
     ~ProgressCounter() { reset(); }
 };
 
-AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
+AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsigned int btLimit)
 {
     // reduce to generators
     const vector<AttributeSet> generators = GenClosureOp::getGenerators(agreeSets);
@@ -336,9 +336,11 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
     const size_t attCount = generators.empty() ? 0 : generators[0].size();
     size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
     ProgressCounter progress;
+    // number of back-tracking steps made
+    unsigned int btCount = 0;
     // main function (uses recursive backtracking, cannot use auto due to recursion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
-    [&extendGraph,&closure,&nodeCount,&progress](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
+    [&extendGraph,&closure,&nodeCount,&progress,&btCount,btLimit](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
     {
         progress.update(next);
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
@@ -347,6 +349,9 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
         for ( NodeID b = 1; b < nodeCount; b++ )
         {
             for ( NodeID a = 0; a < b; a++ )
+            {
+                if ( btLimit && btCount > btLimit )
+                    return false;
                 // quick & easy test before we take a copy
                 if ( g.canAssign(a, b, gen[next]) )
                 {
@@ -360,7 +365,9 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
                 }
                 else
                     BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ") for g = " << g;
+            }
         }
+        btCount++;
         return false;
     };
     while ( nodeCount <= MAX_NODE )
@@ -375,6 +382,10 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets)
         // failure - try with more nodes
         nodeCount++;
         progress.reset();
+        // reset back-tracking counter
+        if ( btLimit && btCount > btLimit )
+            BOOST_LOG_TRIVIAL(info) << "backtrack limit exceeded";
+        btCount = 0;
     }
     exit(1);
 }
