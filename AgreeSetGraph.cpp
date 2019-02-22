@@ -1,6 +1,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/format.hpp>
 #include <unordered_set>
+#include <math.h>
 
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
