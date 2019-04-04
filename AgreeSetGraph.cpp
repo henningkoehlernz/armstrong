@@ -286,8 +286,7 @@ vector<vector<int>> AgreeSetGraph::toArmstrongTable() const
     vector<vector<int>> result(nodeCount, vector<int>(attCount));
     for ( size_t att = 0; att < attCount; att++ )
         for ( size_t node = 0; node < nodeCount; node++ )
-            // bitset tracks attributes right to left
-            result[node][att] = attComp[(attCount - 1) - att][node];
+            result[node][att] = attComp[att][node];
     return result;
 }
 
