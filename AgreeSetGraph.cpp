@@ -1,6 +1,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/format.hpp>
 #include <unordered_set>
+#include <math.h>
 
 #include "AgreeSetGraph.h"
 #include "VectorUtil.h"
@@ -350,7 +351,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsign
         {
             for ( NodeID a = 0; a < b; a++ )
             {
-                if ( btLimit && btCount > btLimit )
+                if ( btCount > btLimit )
                     return false;
                 // quick & easy test before we take a copy
                 if ( g.canAssign(a, b, gen[next]) )
@@ -383,7 +384,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsign
         nodeCount++;
         progress.reset();
         // reset back-tracking counter
-        if ( btLimit && btCount > btLimit )
+        if ( btCount > btLimit )
             BOOST_LOG_TRIVIAL(info) << "backtrack limit exceeded";
         btCount = 0;
     }

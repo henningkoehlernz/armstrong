@@ -13,7 +13,7 @@ namespace po = boost::program_options;
 int main(int argc, char* argv[])
 {
     size_t max_agree_set = 0;
-    unsigned int max_backtrack = 0;
+    unsigned int max_backtrack = UINT_MAX;
 
     // extract command-line arguments
     try {
