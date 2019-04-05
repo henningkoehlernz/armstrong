@@ -73,6 +73,11 @@ public:
     AgreeSetGraph(const AgreeSetGraph &g);
     size_t nodeCount() const;
     size_t attributeCount() const;
+    // number of nodes adjacent to assigned edge
+    size_t activeNodeCount() const;
+    // shrink graph to active size
+    void shrinkToActive();
+    // get attribute set for given edge
     const AttributeSet& at(NodeID a, NodeID b) const;
     // quick test whether agreeSet might be assignable to (a,b)
     bool canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const;

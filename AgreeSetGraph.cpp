@@ -141,6 +141,29 @@ size_t AgreeSetGraph::attributeCount() const
     return attComp.size();
 }
 
+size_t AgreeSetGraph::activeNodeCount() const
+{
+    EdgeID e = edges.size();
+    while ( e-- > 0 )
+        if ( edges[e].assigned )
+        {
+            NodeID a, b;
+            toNodes(e, a, b);
+            return b + 1;
+        }
+    return 0;
+}
+
+void AgreeSetGraph::shrinkToActive()
+{
+    const size_t nodeCount = activeNodeCount();
+    const size_t edgeCount = nodeCount * (nodeCount - 1) / 2;
+    edges.resize(edgeCount, 0);
+    for ( Partition &p : attComp )
+        p.resize(nodeCount);
+    isoType.resize(nodeCount, Connected::None);
+}
+
 const AttributeSet& AgreeSetGraph::at(NodeID a, NodeID b) const
 {
     return edges[toEdge(a,b)].attSet;
@@ -334,58 +357,63 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsign
     const GenClosureOp closure(generators);
     // find initial graph parameters
     const size_t attCount = generators.empty() ? 0 : generators[0].size();
-    size_t nodeCount = 0.5001 + sqrt(2*generators.size() + 0.25);
+    size_t maxActive = agreeSets.size() + 1;
     ProgressCounter progress;
+    // result graph (optimum found so far)
+    AgreeSetGraph optimalGraph(0,0);
     // number of back-tracking steps made
     unsigned int btCount = 0;
     // main function (uses recursive backtracking, cannot use auto due to recursion)
     const function<bool(AgreeSetGraph&,const vector<AttributeSet>&,int)> extendGraph =
-    [&extendGraph,&closure,&nodeCount,&progress,&btCount,btLimit](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
+    [&,btLimit](AgreeSetGraph &g, const vector<AttributeSet> &gen, size_t next = 0) -> bool
     {
-        progress.update(next);
+        //progress.update(next);
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
-            return true;
-        for ( NodeID b = 1; b < nodeCount; b++ )
+        {
+            BOOST_LOG_TRIVIAL(info) << "found Armstrong table with " << g.activeNodeCount() << " nodes";
+            g.shrinkToActive();
+            optimalGraph = g;
+            // try to find smaller graph
+            maxActive = g.nodeCount() - 1;
+            goto the_end;
+        }
+        for ( NodeID b = 1; b < maxActive; b++ )
         {
             for ( NodeID a = 0; a < b; a++ )
             {
                 if ( btCount > btLimit )
-                    return false;
+                    goto the_end;
                 // quick & easy test before we take a copy
                 if ( g.canAssign(a, b, gen[next]) )
                 {
                     // work on copy to ensure g isn't modified if extension fails
                     AgreeSetGraph gPrime(g);
-                    if ( gPrime.assign(a, b, gen[next], closure) && extendGraph(gPrime, gen, next + 1) )
+                    if ( gPrime.assign(a, b, gen[next], closure) )
                     {
-                        g = gPrime;
-                        return true;
+                        BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): assigned to (" << (int)a << ',' << (int)b << ")";
+                        extendGraph(gPrime, gen, next + 1);
+                        // may have found solution and reduced maxActive
+                        if ( b >= maxActive || g.activeNodeCount() > maxActive )
+                            goto the_end;
                     }
                 }
                 else
-                    BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ") for g = " << g;
+                    BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ")";
             }
         }
-        btCount++;
-        return false;
+    the_end:
+        if ( ++btCount <= btLimit )
+            BOOST_LOG_TRIVIAL(debug) << "backtracking (" << btCount << '/' << btLimit << ')';
+        return btCount <= btLimit;
     };
-    while ( nodeCount <= MAX_NODE )
-    {
-        BOOST_LOG_TRIVIAL(info) << "NodeCount = " << nodeCount;
-        AgreeSetGraph g(nodeCount, attCount);
-        // first generator can always be assigned
-        if ( generators.size() > 0 )
-            g.assign(0, 1, generators[0], closure);
-        if ( extendGraph(g, generators, 1) )
-            return g;
-        // failure - try with more nodes
-        nodeCount++;
-        progress.reset();
-        // reset back-tracking counter
-        if ( btCount > btLimit )
-            BOOST_LOG_TRIVIAL(info) << "backtrack limit exceeded";
-        btCount = 0;
-    }
-    exit(1);
+    AgreeSetGraph g(maxActive, attCount);
+    // first generator can always be assigned
+    if ( generators.size() > 0 )
+        g.assign(0, 1, generators[0], closure);
+    if ( extendGraph(g, generators, 1) )
+        BOOST_LOG_TRIVIAL(info) << "done";
+    else
+        BOOST_LOG_TRIVIAL(info) << "backtrack limit reached";
+    return optimalGraph;
 }
