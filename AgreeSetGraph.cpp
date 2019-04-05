@@ -371,7 +371,7 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsign
         //BOOST_LOG_TRIVIAL(trace) << "extendGraph(" << next << "): g = " << g;
         if ( next >= gen.size() )
         {
-            BOOST_LOG_TRIVIAL(info) << "found Armstrong table with " << g.activeNodeCount() << " nodes";
+            BOOST_LOG_TRIVIAL(info) << "found Armstrong table with " << g.activeNodeCount() << " rows";
             g.shrinkToActive();
             optimalGraph = g;
             // try to find smaller graph

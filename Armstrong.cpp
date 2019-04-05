@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
         BOOST_LOG_TRIVIAL(info) << "finding Armstrong table for " << agreeSets.size() << " agree-sets";
     // find armstrong table
     AgreeSetGraph g = findMinAgreeSetGraph(agreeSets, max_backtrack);
-    cout << g << endl;
+    //cout << g << endl;
     for ( vector<int> row : g.toArmstrongTable() )
         cout << row << endl;
     return 0;
