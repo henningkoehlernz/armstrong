@@ -397,6 +397,8 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsign
                         if ( b >= maxActive || g.activeNodeCount() > maxActive )
                             goto the_end;
                     }
+                    else
+                        BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): failed to assign to (" << (int)a << ',' << (int)b << ")";
                 }
                 else
                     BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ")";

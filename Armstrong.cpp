@@ -1,6 +1,8 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/program_options.hpp>
 
 #include "AgreeSetGraph.h"
@@ -43,8 +45,11 @@ int main(int argc, char* argv[])
     }
 
     // init logging
-    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
-    //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
+    //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
+    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
+    boost::log::add_common_attributes();
+    boost::log::add_console_log(std::cout, boost::log::keywords::format = "[%TimeStamp%] %Message%");
+
     // parse agree-sets
     vector<AttributeSet> agreeSets;
     size_t line_counter = 0;
