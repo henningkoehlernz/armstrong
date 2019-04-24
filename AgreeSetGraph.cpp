@@ -175,7 +175,7 @@ bool AgreeSetGraph::canAssign(NodeID a, NodeID b, AttributeSet agreeSet) const
     if ( e.assigned || !(e.attSet <= agreeSet) )
         return false;
     // avoid isomorphic cases - only use smallest representative
-    if ( isoType[a] == Connected::Pre || isoType[a] == Connected::Pre )
+    if ( isoType[a] == Connected::Pre || isoType[b] == Connected::Pre )
         return false;
     // special case of connecting two isolated nodes
     assert(a < b);

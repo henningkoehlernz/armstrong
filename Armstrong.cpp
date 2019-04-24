@@ -54,7 +54,10 @@ int main(int argc, char* argv[])
     else
         boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
     boost::log::add_common_attributes();
-    boost::log::add_console_log(std::cout, boost::log::keywords::format = "[%TimeStamp%] %Message%");
+    boost::log::add_console_log(std::cout,
+        boost::log::keywords::format = "[%TimeStamp%] %Message%",
+        boost::log::keywords::auto_flush = true
+    );
 
     // parse agree-sets
     vector<AttributeSet> agreeSets;
