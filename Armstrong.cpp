@@ -16,12 +16,14 @@ int main(int argc, char* argv[])
 {
     size_t max_agree_set = 0;
     unsigned int max_backtrack = UINT_MAX;
+    bool show_debug = false;
 
     // extract command-line arguments
     try {
         po::options_description desc("Options");
         desc.add_options()
             ("help,h", "show options (this)")
+            ("debug,d", "print debug information")
             ("ag,a", po::value<size_t>(), "set limit on agree-sets")
             ("bt,b", po::value<unsigned int>(), "set limit on backtracking steps")
         ;
@@ -29,11 +31,13 @@ int main(int argc, char* argv[])
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
 
-        if (vm.count("help"))
+        if ( vm.count("help") )
         {
             cout << desc << endl;
             return 0;
         }
+        if ( vm.count("debug") )
+            show_debug = true;
         if ( vm.count("ag") )
             max_agree_set = vm["ag"].as<size_t>();
         if ( vm.count("bt") )
@@ -45,8 +49,10 @@ int main(int argc, char* argv[])
     }
 
     // init logging
-    //boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
-    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
+    if ( show_debug )
+        boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
+    else
+        boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
     boost::log::add_common_attributes();
     boost::log::add_console_log(std::cout, boost::log::keywords::format = "[%TimeStamp%] %Message%");
 
