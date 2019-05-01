@@ -192,10 +192,12 @@ struct AttLoc
     AttLoc(AttID att, NodeID a, NodeID b) : att(att), a(a), b(b) {}
 };
 
+#ifdef DEBUG
 static ostream& operator<<(ostream &os, const AttLoc &attLoc)
 {
     return os << (int)attLoc.att << "@(" << (int)attLoc.a << ',' << (int)attLoc.b << ')';
 }
+#endif
 
 bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const ClosureOp &closure)
 {
@@ -209,7 +211,6 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
     vector<AttLoc> extraAtt;
     for ( AttID att : diff(agreeSet, e.attSet) )
         extraAtt.push_back(AttLoc(att, a, b));
-    BOOST_LOG_TRIVIAL(trace) << "extraAtt = " << str(extraAtt) << " for g = " << *this << ", attComp = " << str(attComp);
     // set of all attributes, used later for pruning
     AttributeSet schema(attributeCount());
     schema.flip();
@@ -251,7 +252,7 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
                         continue;
                     if ( e.assigned )
                     {
-                        BOOST_LOG_TRIVIAL(trace) << "failed at (" << (int)aNode << ',' << (int)bNode << ") += " << (int)attLoc.att << " for g = " << *this;
+                        BOOST_LOG_TRIVIAL(trace) << "failed at (" << (int)aNode << ',' << (int)bNode << ") += " << (int)attLoc.att;
                         return false; // cannot extend assigned edges
                     }
                     e.attSet[attLoc.att] = true;
@@ -260,11 +261,16 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
                 }
         }
         extraAtt.clear();
+#ifdef DEBUG
         {
             string msg;
             if ( !validate(msg) )
-                BOOST_LOG_TRIVIAL(error) << msg << ", attComp = " << str(attComp) << ", g = " << *this;
+            {
+                BOOST_LOG_TRIVIAL(fatal) << msg;
+                exit(0);
+            }
         }
+#endif
         // fix open edges
         for ( EdgeID eID : openEdges )
         {
@@ -273,16 +279,19 @@ bool AgreeSetGraph::assign(NodeID a, NodeID b, AttributeSet agreeSet, const Clos
             EdgeData &e = edges[eID];
             AttributeSet cl = closure(e.attSet);
             // closure shouldn't be entire attribute set, otherwise smaller solution exists
-            if ( schema == cl )
+            if ( cl == schema )
             {
-                BOOST_LOG_TRIVIAL(trace) << "assign(" << (int)a << ',' << (int)b << ',' << agreeSet << "): failed at ("
-                    << (int)aNode << ',' << (int)bNode << ") = " << cl << " for g = " << *this;
+                BOOST_LOG_TRIVIAL(trace) << "failed at (" << (int)aNode << ',' << (int)bNode << ") = " << cl;
                 return false;
             }
-            for ( AttID att : diff(cl, e.attSet) )
+            if ( cl != e.attSet )
             {
-                e.attSet[att] = true;
-                extraAtt.push_back(AttLoc(att, aNode, bNode));
+                BOOST_LOG_TRIVIAL(trace) << "forcing (" << (int)aNode << ',' << (int)bNode << ") = closure(" << e.attSet << ") = " << cl;
+                for ( AttID att : diff(cl, e.attSet) )
+                {
+                    e.attSet[att] = true;
+                    extraAtt.push_back(AttLoc(att, aNode, bNode));
+                }
             }
         }
     }
@@ -391,17 +400,17 @@ AgreeSetGraph findMinAgreeSetGraph(const vector<AttributeSet> &agreeSets, unsign
                     AgreeSetGraph gPrime(g);
                     if ( gPrime.assign(a, b, gen[next], closure) )
                     {
-                        BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): assigned to (" << (int)a << ',' << (int)b << ")";
+                        BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): assigned " << gen[next] << " to (" << (int)a << ',' << (int)b << ")";
                         extendGraph(gPrime, gen, next + 1);
                         // may have found solution and reduced maxActive
                         if ( b >= maxActive || g.activeNodeCount() > maxActive )
                             goto the_end;
                     }
                     else
-                        BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): failed to assign to (" << (int)a << ',' << (int)b << ")";
+                        BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): failed to assign " << gen[next] << " to (" << (int)a << ',' << (int)b << ")";
                 }
                 else
-                    BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): cannot assign to (" << (int)a << ',' << (int)b << ")";
+                    BOOST_LOG_TRIVIAL(debug) << "extendGraph(" << next << "): cannot assign " << gen[next] << " to (" << (int)a << ',' << (int)b << ")";
             }
         }
     the_end:

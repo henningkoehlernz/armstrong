@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 {
     size_t max_agree_set = 0;
     unsigned int max_backtrack = UINT_MAX;
-    bool show_debug = false;
+    bool show_debug = false, show_trace = false;
 
     // extract command-line arguments
     try {
@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
         desc.add_options()
             ("help,h", "show options (this)")
             ("debug,d", "print debug information")
+            ("trace,t", "print trace information (including debug)")
             ("ag,a", po::value<size_t>(), "set limit on agree-sets")
             ("bt,b", po::value<unsigned int>(), "set limit on backtracking steps")
         ;
@@ -38,6 +39,8 @@ int main(int argc, char* argv[])
         }
         if ( vm.count("debug") )
             show_debug = true;
+        if ( vm.count("trace") )
+            show_trace = true;
         if ( vm.count("ag") )
             max_agree_set = vm["ag"].as<size_t>();
         if ( vm.count("bt") )
@@ -49,7 +52,9 @@ int main(int argc, char* argv[])
     }
 
     // init logging
-    if ( show_debug )
+    if ( show_trace )
+        boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::trace );
+    else if ( show_debug )
         boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::debug );
     else
         boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
@@ -67,7 +72,6 @@ int main(int argc, char* argv[])
         AttributeSet agreeSet;
         if ( cin >> agreeSet )
         {
-            line_counter++;
             boost::reverse(agreeSet); // bits are stored in left-to-right order
             if ( !agreeSet.none() && !agreeSet.all() && !contains(agreeSets, agreeSet) )
             {
@@ -76,6 +80,7 @@ int main(int argc, char* argv[])
             }
             else
                 BOOST_LOG_TRIVIAL(warning) << line_counter << ": skipping " << agreeSet;
+            line_counter++;
         }
         else
             break;
