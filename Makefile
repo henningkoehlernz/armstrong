@@ -12,6 +12,8 @@ default:
 	$(CC) -o armstrong Armstrong.cpp AgreeSetGraph.cpp $(LINK)
 miner:
 	$(CC) -o miner AgreeSetMiner.cpp AgreeSetMinerCSV.cpp $(LINK)
+random:
+	$(CC) -o random RandomArmstrong.cpp AgreeSetMiner.cpp AgreeSetGraph.cpp $(LINK)
 test:
 	$(CC) -o testASG TestAgreeSetGraph.cpp AgreeSetGraph.cpp $(LINK)
 	$(CC) -o testASM TestAgreeSetMiner.cpp AgreeSetMiner.cpp $(LINK)
@@ -19,4 +21,4 @@ test:
 	./testASM
 clean:
 	rm armstrong miner test
-.PHONY: default miner testASG testASM
+.PHONY: default miner random testASG testASM

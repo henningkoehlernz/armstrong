@@ -1,5 +1,5 @@
-#ifndef AGREE_SET_GRAPH_H
-#define AGREE_SET_GRAPH_H
+#ifndef AGREE_SET_MINER_H
+#define AGREE_SET_MINER_H
 
 #include <map>
 #include "AgreeSetTypes.h"
