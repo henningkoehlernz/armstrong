@@ -7,6 +7,7 @@
 
 namespace boost
 {
+#if BOOST_VERSION < 107100
     template <typename Block, typename Alloc>
     std::size_t hash_value(boost::dynamic_bitset<Block, Alloc> const& bs)
     {
@@ -25,6 +26,7 @@ namespace boost
         */
         return seed;
     }
+#endif
 
     template <typename Block, typename Alloc>
     void reverse(boost::dynamic_bitset<Block, Alloc> & bs)
@@ -40,6 +42,7 @@ namespace boost
 
 namespace std
 {
+#if BOOST_VERSION < 107100
     template <typename Block, typename Alloc>
     struct hash<boost::dynamic_bitset<Block, Alloc>>
     {
@@ -50,6 +53,7 @@ namespace std
             return hash_value(s);
         }
     };
+#endif
 }
 
 #endif
