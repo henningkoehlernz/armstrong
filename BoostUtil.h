@@ -1,7 +1,7 @@
 #ifndef BOOST_UTIL_H
 #define BOOST_UTIL_H
 
-#include <bits/stdc++.h>
+#include <vector>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 

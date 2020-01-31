@@ -1,4 +1,5 @@
 #include <vector>
+#include <unordered_set>
 #include <boost/log/trivial.hpp>
 #include <boost/functional/hash.hpp>
 
