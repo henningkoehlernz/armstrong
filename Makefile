@@ -1,5 +1,6 @@
 #LINK = -static -lboost_log -lboost_system -lboost_thread -lpthread
 LINK = -DBOOST_LOG_DYN_LINK -DBOOST_TEST_DYN_LINK \
+-DBOOST_LIB_SUFFIX=-mt \
 -lboost_log -lboost_log_setup \
 -lboost_system \
 -lboost_thread \
