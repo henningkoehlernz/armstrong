@@ -48,7 +48,7 @@ AttributeSet ClosureCalculator::operator()(const AttributeSet &x)
     {
         const Row *row;
         size_t hashValue;
-        bool operator<(const RowRef &other) { return hashValue < other.hashValue; }
+        bool operator<(const RowRef &other) const { return hashValue < other.hashValue; }
     };
     vector<RowRef> rowRefs(table.size());
     IndexSet columnSet = indexSetOf(x);
