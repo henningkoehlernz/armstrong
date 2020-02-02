@@ -8,7 +8,8 @@ LINK = -DBOOST_LOG_DYN_LINK -DBOOST_TEST_DYN_LINK \
 -lboost_unit_test_framework \
 -lboost_program_options
 CC = g++ -std=c++17 -O2 -Wall -g
-#CC = clang -stdlib=libc++ -O2 -Wall
+#Ubunto: sudo apt install clang libc++-dev libc++abi-dev
+#CC = clang++ -std=c++17 -stdlib=libc++ -O2 -Wall
 default:
 	$(CC) -o armstrong Armstrong.cpp AgreeSetGraph.cpp $(LINK)
 miner:
