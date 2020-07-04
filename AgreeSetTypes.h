@@ -1,7 +1,7 @@
 #ifndef AGREE_SET_TYPES_H
 #define AGREE_SET_TYPES_H
 
-#include <string>
+#include <vector>
 #include <boost/dynamic_bitset.hpp>
 
 typedef std::vector<size_t> Row;
