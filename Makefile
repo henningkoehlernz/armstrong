@@ -13,7 +13,7 @@ CC = g++ -std=c++17 -O2 -Wall -g
 default:
 	$(CC) -o armstrong Armstrong.cpp AgreeSetGraph.cpp $(LINK)
 miner:
-	$(CC) -o miner AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetMinerCSV.cpp $(LINK)
+	$(CC) -o miner CSVUtil.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetMinerCSV.cpp $(LINK)
 random:
 	$(CC) -o random RandomArmstrong.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetGraph.cpp $(LINK)
 test:
