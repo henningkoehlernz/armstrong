@@ -13,14 +13,17 @@ CC = g++ -std=c++17 -O2 -Wall -g
 default:
 	$(CC) -o armstrong Armstrong.cpp AgreeSetGraph.cpp $(LINK)
 miner:
-	$(CC) -o miner CSVUtil.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetMinerCSV.cpp $(LINK)
+	$(CC) -o miner AgreeSetMinerCSV.cpp CSVUtil.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp $(LINK)
+	$(CC) -o edgeMiner AgreeSetEdgeMinerCSV.cpp CSVUtil.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetEdgeMiner.cpp $(LINK)
 random:
 	$(CC) -o random RandomArmstrong.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetGraph.cpp $(LINK)
 test:
 	$(CC) -o testASG TestAgreeSetGraph.cpp AgreeSetGraph.cpp $(LINK)
 	$(CC) -o testASM TestAgreeSetMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp $(LINK)
+	$(CC) -o testASEM TestAgreeSetEdgeMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetEdgeMiner.cpp $(LINK)
 	./testASG
 	./testASM
+	./testASEM
 clean:
 	rm armstrong miner test
 .PHONY: default miner random testASG testASM

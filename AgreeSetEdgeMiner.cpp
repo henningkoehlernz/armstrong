@@ -19,7 +19,7 @@ std::vector<std::pair<size_t, size_t>> getAgreeSetEdges(const Table &table, cons
         rowRefs[i].rowID = i;
         rowRefs[i].hashValue = subHash(table[i], columnSet);
     }
-    sort(rowRefs.begin(), rowRefs.end());
+    stable_sort(rowRefs.begin(), rowRefs.end());
     // identify vertex pairs with matching agree sets
     std::vector<std::pair<size_t, size_t>> result;
     for ( size_t v = 0; v+1 < table.size(); v++ )
@@ -36,6 +36,7 @@ std::vector<std::pair<size_t, size_t>> getAgreeSetEdges(const Table &table, cons
                     break;
                 }
             if ( match )
+                // stability ensures first vertex < second
                 result.push_back(std::make_pair(rowRefs[v].rowID, rowRefs[w].rowID));
         }
     return result;
