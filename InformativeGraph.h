@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include "AgreeSetTypes.h"
 
-typedef uint16_t NodeID;
-typedef uint16_t AgreeSetID;
+typedef uint32_t NodeID;
+typedef uint32_t AgreeSetID;
 
 /**
  * undirected graph with tuples as vertices and agree-sets as edge labels
@@ -19,10 +19,11 @@ typedef uint16_t AgreeSetID;
 class InformativeGraph
 {
 private:
+    typedef std::pair<NodeID,NodeID> Edge;
     // nodes store list of neighbors
     std::vector<std::vector<NodeID>> neighbors;
     // edge labels are stored separately
-    std::unordered_map<std::pair<NodeID,NodeID>, AgreeSetID, boost::hash<std::pair<NodeID,NodeID>>> edgeLabels;
+    std::unordered_map<Edge,AgreeSetID,boost::hash<Edge>> edgeLabels;
     // track which nodes have been already been picked
     boost::dynamic_bitset<> pickedNodes;
 
@@ -49,6 +50,8 @@ public:
     std::vector<AgreeSetID> getPossibleAgreeSets(NodeID node) const;
     // get AgreeSetIDs on adjacent edges to picked nodes
     std::vector<AgreeSetID> getCertainAgreeSets(NodeID node) const;
+    // returns nodes that appear in all edges labeled with some agree-set
+    std::vector<NodeID> getForced() const;
 
     friend std::ostream& operator<<(std::ostream &os, const InformativeGraph &g);
 };

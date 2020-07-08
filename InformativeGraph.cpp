@@ -32,7 +32,7 @@ void InformativeGraph::removeEdge(NodeID v, NodeID w)
 
 void InformativeGraph::removeAgreeSet(AgreeSetID ag)
 {
-    for ( std::pair<std::pair<NodeID,NodeID>, AgreeSetID> keyValue : edgeLabels )
+    for ( std::pair<Edge, AgreeSetID> keyValue : edgeLabels )
         if ( keyValue.second == ag )
             removeEdge(keyValue.first.first, keyValue.first.second);
 }
@@ -64,7 +64,7 @@ bool InformativeGraph::picked(NodeID node) const
 void InformativeGraph::addEdge(NodeID v, NodeID w, AgreeSetID ag)
 {
     // store edge label
-    std::pair<NodeID, NodeID> edge = ordered(v,w);
+    Edge edge = ordered(v,w);
     assert(edgeLabels.count(edge) == 0);
     edgeLabels[edge] = ag;
     // resize graph if needed
@@ -113,6 +113,51 @@ std::vector<AgreeSetID> InformativeGraph::getCertainAgreeSets(NodeID node) const
         if ( picked(neighbor) )
             s.insert(getEdgeLabel(node, neighbor));
     return std::vector<AgreeSetID>(s.begin(), s.end());
+}
+
+std::vector<NodeID> InformativeGraph::getForced() const
+{
+    // organize edges by agree set and compute intersections
+    static const std::vector<NodeID> NotVisited = { 999999999, 999999999 };
+    std::vector<std::vector<NodeID>> forcedByAgreeSet;
+    for ( std::pair<Edge,AgreeSetID> keyValue : edgeLabels )
+    {
+        // resize vector if needed
+        if ( keyValue.second >= forcedByAgreeSet.size() )
+            forcedByAgreeSet.resize(keyValue.second + 1, NotVisited);
+        // intersect with new edge
+        std::vector<NodeID> &forced = forcedByAgreeSet[keyValue.second];
+        const Edge &e = keyValue.first;
+        if ( forced == NotVisited )
+        {
+            forced[0] = e.first;
+            forced[1] = e.second;
+        }
+        else if ( forced.size() == 2 )
+        {
+            // can have at most one overlap
+            if ( forced[0] == e.first || forced[0] == e.second )
+                forced.resize(1);
+            else if ( forced[1] == e.first || forced[1] == e.second )
+            {
+                forced[0] = forced[1];
+                forced.resize(1);
+            }
+            else
+                forced.resize(0);
+        }
+        else if ( forced.size() == 1 )
+        {
+            if ( forced[0] != e.first && forced[0] != e.second )
+                forced.resize(0);
+        }
+    }
+    // combine into single vector
+    std::unordered_set<NodeID> forcedNodes;
+    for ( const std::vector<NodeID> &forced : forcedByAgreeSet )
+        if ( forced != NotVisited )
+            forcedNodes.insert(forced.begin(), forced.end());
+    return std::vector<NodeID>(forcedNodes.begin(), forcedNodes.end());
 }
 
 std::ostream& operator<<(std::ostream &os, const InformativeGraph &g)

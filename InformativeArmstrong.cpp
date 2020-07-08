@@ -2,6 +2,16 @@
 
 using namespace std;
 
+void pickForced(InformativeGraph &g)
+{
+    for ( NodeID node : g.getForced() )
+        g.pickNode(node);
+}
+
+void pickGreedy(InformativeGraph &g)
+{
+}
+
 int main(int argc, char* argv[])
 {
     // parse informative graph
@@ -16,6 +26,7 @@ int main(int argc, char* argv[])
         else
             break;
     }
+    pickForced(g);
     // print result of parsing (basic debug)
     cout << g;
     return 0;
