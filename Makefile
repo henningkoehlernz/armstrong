@@ -28,5 +28,5 @@ test:
 	./testASM
 	./testASEM
 clean:
-	rm armstrong miner test
-.PHONY: default miner random testASG testASM
+	rm armstrong informative miner edgeMiner random testASG testASM testASEM
+.PHONY: armstrong informative miner edgeMiner random testASG testASM testASEM
