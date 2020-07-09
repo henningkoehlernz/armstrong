@@ -160,6 +160,15 @@ std::vector<NodeID> InformativeGraph::getForced() const
     return std::vector<NodeID>(forcedNodes.begin(), forcedNodes.end());
 }
 
+std::vector<NodeID> InformativeGraph::getPicked() const
+{
+    std::vector<NodeID> result;
+    for ( NodeID node = 0; node < nodeCount(); node++ )
+        if ( picked(node) )
+            result.push_back(node);
+    return result;
+}
+
 std::ostream& operator<<(std::ostream &os, const InformativeGraph &g)
 {
     os << "neighbors:" << std::endl;
@@ -169,8 +178,7 @@ std::ostream& operator<<(std::ostream &os, const InformativeGraph &g)
     for ( std::pair<std::pair<NodeID,NodeID>, AgreeSetID> keyValue : g.edgeLabels )
         os << keyValue.first << " -> " << keyValue.second << std::endl;
     os << "picked:";
-    for ( NodeID node = 0; node < g.nodeCount(); node++ )
-        if ( g.picked(node) )
-            os << ' ' << node;
+    for ( NodeID node : g.getPicked() )
+        os << ' ' << node;
     return os << std::endl;
 }

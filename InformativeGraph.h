@@ -52,6 +52,8 @@ public:
     std::vector<AgreeSetID> getCertainAgreeSets(NodeID node) const;
     // returns nodes that appear in all edges labeled with some agree-set
     std::vector<NodeID> getForced() const;
+    // returns all nodes picked
+    std::vector<NodeID> getPicked() const;
 
     friend std::ostream& operator<<(std::ostream &os, const InformativeGraph &g);
 };

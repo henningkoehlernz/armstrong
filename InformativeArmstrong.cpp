@@ -92,5 +92,6 @@ int main(int argc, char* argv[])
     pickGreedy(g);
     // print result of parsing (basic debug)
     cout << g;
+    cout << '(' << g.getPicked().size() << " nodes picked)" << endl;
     return 0;
 }
