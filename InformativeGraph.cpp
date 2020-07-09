@@ -30,11 +30,18 @@ void InformativeGraph::removeEdge(NodeID v, NodeID w)
     std::erase(neighbors[w], v);
 }
 
-void InformativeGraph::removeAgreeSet(AgreeSetID ag)
+void InformativeGraph::removeAgreeSet(AgreeSetID ag, std::unordered_set<NodeID> *updated)
 {
     for ( std::pair<Edge, AgreeSetID> keyValue : edgeLabels )
         if ( keyValue.second == ag )
+        {
             removeEdge(keyValue.first.first, keyValue.first.second);
+            if ( updated != nullptr )
+            {
+                updated->insert(keyValue.first.first);
+                updated->insert(keyValue.first.second);
+            }
+        }
 }
 
 InformativeGraph::InformativeGraph(size_t nodeCount) : neighbors(nodeCount), pickedNodes(nodeCount)
@@ -78,13 +85,13 @@ void InformativeGraph::addEdge(NodeID v, NodeID w, AgreeSetID ag)
     neighbors[w].push_back(v);
 }
 
-void InformativeGraph::pickNode(NodeID node)
+void InformativeGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated)
 {
     assert(!pickedNodes[node]);
     pickedNodes[node] = true;
     // automatically eliminate edges that are no longer needed
     for ( AgreeSetID ag : getCertainAgreeSets(node) )
-        removeAgreeSet(ag);
+        removeAgreeSet(ag, updated);
 }
 
 void InformativeGraph::removeNode(NodeID node)

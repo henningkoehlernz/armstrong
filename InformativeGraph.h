@@ -7,6 +7,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 #include <unordered_map>
+#include <unordered_set>
 #include "AgreeSetTypes.h"
 
 typedef uint32_t NodeID;
@@ -31,7 +32,7 @@ private:
     bool validate(std::string &msg) const;
 
     void removeEdge(NodeID v, NodeID w);
-    void removeAgreeSet(AgreeSetID ag);
+    void removeAgreeSet(AgreeSetID ag, std::unordered_set<NodeID> *updated);
 
 public:
     InformativeGraph(size_t nodeCount = 0);
@@ -42,7 +43,11 @@ public:
     bool picked(NodeID node) const;
 
     void addEdge(NodeID v, NodeID w, AgreeSetID ag);
-    void pickNode(NodeID node);
+    /**
+     * marks node a picked; for each edge to other picked node removes all edges with same label
+     * if updated is set, inserts all nodes adjacent to edges removed
+     */
+    void pickNode(NodeID node, std::unordered_set<NodeID> *updated = nullptr);
     void removeNode(NodeID node);
 
     std::vector<NodeID> getNeighbors(NodeID node) const;
@@ -50,7 +55,7 @@ public:
     std::vector<AgreeSetID> getPossibleAgreeSets(NodeID node) const;
     // get AgreeSetIDs on adjacent edges to picked nodes
     std::vector<AgreeSetID> getCertainAgreeSets(NodeID node) const;
-    // returns nodes that appear in all edges labeled with some agree-set
+    // returns nodes that appear in all edges labeled with some particular agree-set
     std::vector<NodeID> getForced() const;
     // returns all nodes picked
     std::vector<NodeID> getPicked() const;
