@@ -53,10 +53,44 @@ void OrderedTrie::Node::erase(T id, const Set &value, size_t index)
 
 void OrderedTrie::Node::findSubsets(const Set &s, size_t index, std::vector<T> &out) const
 {
+    // current prefix has been subset of s[0..index]
+    for ( T id : ids )
+        out.push_back(id);
+    // check children
+    size_t child = 0;
+    while ( index < s.size() && child < children.size() )
+    {
+        if ( s[index] < children[child].first )
+            index++;
+        else if ( s[index] > children[child].first )
+            child++;
+        else
+            children[child++].findSubsets(s, ++index, out);
+    }
 }
 
 void OrderedTrie::Node::findSupersets(const Set &s, size_t index, std::vector<T> &out) const
 {
+    // current prefix has been superset of s[0..index]
+    if ( index >= s.size() )
+    {
+        for ( T id : ids )
+            out.push_back(id);
+        // all children must be supersets as well
+        for ( const std::pair<Alphabet,TrieNode> &child : children )
+            child.findSupersets(s, index, out);
+        return;
+    }
+    // check children
+    for ( const std::pair<Alphabet,TrieNode> &child : children )
+    {
+        if ( s[index] < child.first )
+            break; // as children are sorted, this condition won't change
+        else if ( s[index] > children[child].first )
+            children[child++].findSupersets(s, index, out);
+        else
+            children[child++].findSupersets(s, ++index, out);
+    }
 }
 
 //----------------- OrderedTrie ------------------
@@ -86,8 +120,14 @@ void OrderedTrie::erase(T id)
 
 std::vector<T> OrderedTrie::findSubsets(const Set &s) const
 {
+    std::vector<T> out;
+    root.findSubsets(s, 0, &out);
+    return out;
 }
 
 std::vector<T> OrderedTrie::findSupersets(const Set &s) const
 {
+    std::vector<T> out;
+    root.findSupersets(s, 0, &out);
+    return out;
 }
