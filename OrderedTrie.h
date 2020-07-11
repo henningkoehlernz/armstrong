@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
 // data structure for storing collection of sets
 // allows efficient checking for existance of subset/superset
@@ -23,6 +24,11 @@ private:
         void erase(T id, const Set &value, size_t index);
         void findSubsets(const Set &s, size_t index, std::vector<T> &out) const;
         void findSupersets(const Set &s, size_t index, std::vector<T> &out) const;
+        // auto-generate non-templated friend function
+        friend std::ostream& operator<<(std::ostream &os, const Node &node)
+        {
+            return os << "<ids=" << node.ids << ", children=" << node.children << ">";
+        }
     };
 
     Node root;

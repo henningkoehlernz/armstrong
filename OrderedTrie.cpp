@@ -1,3 +1,6 @@
+#include <boost/log/trivial.hpp>
+#include "VectorUtil.h"
+
 //----------------- OrderedTrie::Node -----------
 
 template <typename T, typename Alphabet>
@@ -55,6 +58,7 @@ void OrderedTrie<T,Alphabet>::Node::erase(T id, const Set &value, size_t index)
 template <typename T, typename Alphabet>
 void OrderedTrie<T,Alphabet>::Node::findSubsets(const Set &s, size_t index, std::vector<T> &out) const
 {
+    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << "(" << s << ',' << index << ',' << out << ")";
     // current prefix has been subset of s[0..index]
     for ( T id : ids )
         out.push_back(id);
@@ -67,13 +71,17 @@ void OrderedTrie<T,Alphabet>::Node::findSubsets(const Set &s, size_t index, std:
         else if ( s[index] > child->first )
             child++;
         else
+        {
+            BOOST_LOG_TRIVIAL(trace) << "recursing @" << child->first;
             (child++)->second.findSubsets(s, ++index, out);
+        }
     }
 }
 
 template <typename T, typename Alphabet>
 void OrderedTrie<T,Alphabet>::Node::findSupersets(const Set &s, size_t index, std::vector<T> &out) const
 {
+    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << "(" << s << ',' << index << ',' << out << ")";
     // current prefix has been superset of s[0..index]
     if ( index >= s.size() )
     {
@@ -81,7 +89,10 @@ void OrderedTrie<T,Alphabet>::Node::findSupersets(const Set &s, size_t index, st
             out.push_back(id);
         // all children must be supersets as well
         for ( const std::pair<Alphabet,Node> &child : children )
+        {
+            BOOST_LOG_TRIVIAL(trace) << "recursing @" << child.first;
             child.second.findSupersets(s, index, out);
+        }
         return;
     }
     // check children
@@ -90,9 +101,15 @@ void OrderedTrie<T,Alphabet>::Node::findSupersets(const Set &s, size_t index, st
         if ( s[index] < child.first )
             break; // as children are sorted, this condition won't change
         else if ( s[index] > child.first )
+        {
+            BOOST_LOG_TRIVIAL(trace) << "recursing @" << child.first;
             child.second.findSupersets(s, index, out);
+        }
         else
-            child.second.findSupersets(s, ++index, out);
+        {
+            BOOST_LOG_TRIVIAL(trace) << "recursing @" << child.first;
+            child.second.findSupersets(s, index + 1, out);
+        }
     }
 }
 
