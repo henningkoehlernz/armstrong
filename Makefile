@@ -24,9 +24,12 @@ test:
 	$(CC) -o testASG TestAgreeSetGraph.cpp AgreeSetGraph.cpp $(LINK)
 	$(CC) -o testASM TestAgreeSetMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp $(LINK)
 	$(CC) -o testASEM TestAgreeSetEdgeMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetEdgeMiner.cpp $(LINK)
+	$(CC) -o testTrie TestOrderedTrie.cpp $(LINK)
+# add this to generate core dumps: --catch_system_errors=no
 	./testASG
 	./testASM
 	./testASEM
+	./testTrie
 clean:
-	rm armstrong informative miner edgeMiner random testASG testASM testASEM
+	rm armstrong informative miner edgeMiner random testASG testASM testASEM testTrie
 .PHONY: armstrong informative miner edgeMiner random testASG testASM testASEM

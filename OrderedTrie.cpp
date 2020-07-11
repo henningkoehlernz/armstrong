@@ -1,13 +1,13 @@
-#include "OrderedTrie.h"
-
 //----------------- OrderedTrie::Node -----------
 
-bool OrderedTrie::Node::empty() const
+template <typename T, typename Alphabet>
+bool OrderedTrie<T,Alphabet>::Node::empty() const
 {
     return ids.empty() && children.empty();
 }
 
-void OrderedTrie::Node::insert(T id, const Set &value, size_t index)
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::Node::insert(T id, const Set &value, size_t index)
 {
     if ( index >= value.size() )
         ids.push_back(id);
@@ -15,18 +15,19 @@ void OrderedTrie::Node::insert(T id, const Set &value, size_t index)
     {
         const Alphabet nextElem = value[index];
         // find position to insert
-        size_t pos = 0;
-        while ( pos < children.size() && children[pos].first < nextElem )
-            pos++;
+        auto child = children.begin();
+        while ( child < children.end() && child->first < nextElem )
+            child++;
         // ensure existance of suitable child
-        if ( pos == children.size() || children[pos].first > nextElem )
-            children.insert(pos, pair(nextElem, Node()));
+        if ( child == children.end() || child->first > nextElem )
+            child = children.insert(child, std::pair<Alphabet,Node>(nextElem, Node()));
         // insert
-        children[pos].second.insert(id, value, index + 1);
+        child->second.insert(id, value, index + 1);
     }
 }
 
-void OrderedTrie::Node::erase(T id, const Set &value, size_t index)
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::Node::erase(T id, const Set &value, size_t index)
 {
     if ( index >= value.size() )
     {
@@ -40,36 +41,38 @@ void OrderedTrie::Node::erase(T id, const Set &value, size_t index)
     else
     {
         // find containing child
-        auto it = children.begin();
-        while ( it->first != value[index] )
-            ++it;
+        auto child = children.begin();
+        while ( child->first != value[index] )
+            ++child;
         // erase from child
-        it->second.erase(id, value, index + 1);
+        child->second.erase(id, value, index + 1);
         // erase child if now empty
-        if ( it->second.empty() )
-            children.erase(it);
+        if ( child->second.empty() )
+            children.erase(child);
     }
 }
 
-void OrderedTrie::Node::findSubsets(const Set &s, size_t index, std::vector<T> &out) const
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::Node::findSubsets(const Set &s, size_t index, std::vector<T> &out) const
 {
     // current prefix has been subset of s[0..index]
     for ( T id : ids )
         out.push_back(id);
     // check children
-    size_t child = 0;
-    while ( index < s.size() && child < children.size() )
+    auto child = children.begin();
+    while ( index < s.size() && child < children.end() )
     {
-        if ( s[index] < children[child].first )
+        if ( s[index] < child->first )
             index++;
-        else if ( s[index] > children[child].first )
+        else if ( s[index] > child->first )
             child++;
         else
-            children[child++].findSubsets(s, ++index, out);
+            (child++)->second.findSubsets(s, ++index, out);
     }
 }
 
-void OrderedTrie::Node::findSupersets(const Set &s, size_t index, std::vector<T> &out) const
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::Node::findSupersets(const Set &s, size_t index, std::vector<T> &out) const
 {
     // current prefix has been superset of s[0..index]
     if ( index >= s.size() )
@@ -77,31 +80,33 @@ void OrderedTrie::Node::findSupersets(const Set &s, size_t index, std::vector<T>
         for ( T id : ids )
             out.push_back(id);
         // all children must be supersets as well
-        for ( const std::pair<Alphabet,TrieNode> &child : children )
-            child.findSupersets(s, index, out);
+        for ( const std::pair<Alphabet,Node> &child : children )
+            child.second.findSupersets(s, index, out);
         return;
     }
     // check children
-    for ( const std::pair<Alphabet,TrieNode> &child : children )
+    for ( const std::pair<Alphabet,Node> &child : children )
     {
         if ( s[index] < child.first )
             break; // as children are sorted, this condition won't change
-        else if ( s[index] > children[child].first )
-            children[child++].findSupersets(s, index, out);
+        else if ( s[index] > child.first )
+            child.second.findSupersets(s, index, out);
         else
-            children[child++].findSupersets(s, ++index, out);
+            child.second.findSupersets(s, ++index, out);
     }
 }
 
 //----------------- OrderedTrie ------------------
 
-void OrderedTrie::insert(T id, const Set &value)
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::insert(T id, const Set &value)
 {
-    valueMap.insert(id, value);
+    valueMap[id] = value;
     root.insert(id, value, 0);
 }
 
-void OrderedTrie::update(T id, const Set &value)
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::update(T id, const Set &value)
 {
     Set &storedValue = valueMap[id];
     if ( storedValue != value )
@@ -112,22 +117,25 @@ void OrderedTrie::update(T id, const Set &value)
     }
 }
 
-void OrderedTrie::erase(T id)
+template <typename T, typename Alphabet>
+void OrderedTrie<T,Alphabet>::erase(T id)
 {
     root.erase(id, valueMap.at(id), 0);
     valueMap.erase(id);
 }
 
-std::vector<T> OrderedTrie::findSubsets(const Set &s) const
+template <typename T, typename Alphabet>
+std::vector<T> OrderedTrie<T,Alphabet>::findSubsets(const Set &s) const
 {
     std::vector<T> out;
-    root.findSubsets(s, 0, &out);
+    root.findSubsets(s, 0, out);
     return out;
 }
 
-std::vector<T> OrderedTrie::findSupersets(const Set &s) const
+template <typename T, typename Alphabet>
+std::vector<T> OrderedTrie<T,Alphabet>::findSupersets(const Set &s) const
 {
     std::vector<T> out;
-    root.findSupersets(s, 0, &out);
+    root.findSupersets(s, 0, out);
     return out;
 }

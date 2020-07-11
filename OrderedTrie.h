@@ -11,12 +11,12 @@ class OrderedTrie
 {
 public:
     // sets are represented as ordered vectors
-    typdef std::vector<Alphabet> Set;
+    typedef std::vector<Alphabet> Set;
 private:
     class Node
     {
         std::vector<T> ids;
-        std::vector<std::pair<Alphabet,TrieNode>> children;
+        std::vector<std::pair<Alphabet,Node>> children;
     public:
         bool empty() const;
         void insert(T id, const Set &value, size_t index);
@@ -35,4 +35,6 @@ public:
     std::vector<T> findSupersets(const Set &s) const;
 };
 
+// needed for proper linkage
+#include "OrderedTrie.cpp"
 #endif
