@@ -1,5 +1,6 @@
 #include <queue>
 #include "InformativeGraph.h"
+#include "OrderedTrie.h"
 
 using namespace std;
 

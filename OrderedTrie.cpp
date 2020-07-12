@@ -116,29 +116,48 @@ void OrderedTrie<T,Alphabet>::Node::findSupersets(const Set &s, size_t index, st
 //----------------- OrderedTrie ------------------
 
 template <typename T, typename Alphabet>
-void OrderedTrie<T,Alphabet>::insert(T id, const Set &value)
+bool OrderedTrie<T,Alphabet>::contains(T id) const
 {
-    valueMap[id] = value;
-    root.insert(id, value, 0);
+    return valueMap.count(id) > 0;
 }
 
 template <typename T, typename Alphabet>
-void OrderedTrie<T,Alphabet>::update(T id, const Set &value)
+const OrderedTrie<T,Alphabet>::Set& OrderedTrie<T,Alphabet>::at(T id) const
 {
+    return valueMap.at(id);
+}
+
+template <typename T, typename Alphabet>
+bool OrderedTrie<T,Alphabet>::insert(T id, const Set &value)
+{
+    if ( !contains(id) )
+    {
+        valueMap[id] = value;
+        root.insert(id, value, 0);
+        return true;
+    }
+    // update
     Set &storedValue = valueMap[id];
     if ( storedValue != value )
     {
         root.erase(id, storedValue, 0);
         root.insert(id, value, 0);
         storedValue = value;
+        return true;
     }
+    return false;
 }
 
 template <typename T, typename Alphabet>
-void OrderedTrie<T,Alphabet>::erase(T id)
+bool OrderedTrie<T,Alphabet>::erase(T id)
 {
-    root.erase(id, valueMap.at(id), 0);
-    valueMap.erase(id);
+    if ( contains(id) )
+    {
+        root.erase(id, valueMap.at(id), 0);
+        valueMap.erase(id);
+        return true;
+    }
+    return false;
 }
 
 template <typename T, typename Alphabet>

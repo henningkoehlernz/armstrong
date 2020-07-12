@@ -87,7 +87,7 @@ void InformativeGraph::addEdge(NodeID v, NodeID w, AgreeSetID ag)
 
 void InformativeGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated)
 {
-    assert(!pickedNodes[node]);
+    assert(!picked(node));
     pickedNodes[node] = true;
     // automatically eliminate edges that are no longer needed
     for ( AgreeSetID ag : getCertainAgreeSets(node) )
@@ -96,6 +96,7 @@ void InformativeGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated
 
 void InformativeGraph::removeNode(NodeID node)
 {
+    assert(!picked(node));
     for ( NodeID neighbor : neighbors[node] )
         removeEdge(node, neighbor);
 }
@@ -110,7 +111,9 @@ std::vector<AgreeSetID> InformativeGraph::getPossibleAgreeSets(NodeID node) cons
     std::unordered_set<AgreeSetID> s;
     for ( NodeID neighbor : neighbors[node] )
         s.insert(getEdgeLabel(node, neighbor));
-    return std::vector<AgreeSetID>(s.begin(), s.end());
+    std::vector<AgreeSetID> result(s.begin(), s.end());
+    sort(result.begin(), result.end());
+    return result;
 }
 
 std::vector<AgreeSetID> InformativeGraph::getCertainAgreeSets(NodeID node) const
@@ -119,7 +122,9 @@ std::vector<AgreeSetID> InformativeGraph::getCertainAgreeSets(NodeID node) const
     for ( NodeID neighbor : neighbors[node] )
         if ( picked(neighbor) )
             s.insert(getEdgeLabel(node, neighbor));
-    return std::vector<AgreeSetID>(s.begin(), s.end());
+    std::vector<AgreeSetID> result(s.begin(), s.end());
+    sort(result.begin(), result.end());
+    return result;
 }
 
 std::vector<NodeID> InformativeGraph::getForced() const

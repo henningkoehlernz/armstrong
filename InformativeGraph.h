@@ -47,13 +47,13 @@ public:
      * marks node a picked; for each edge to other picked node removes all edges with same label
      * if updated is set, inserts all nodes adjacent to edges removed
      */
-    void pickNode(NodeID node, std::unordered_set<NodeID> *updated = nullptr);
-    void removeNode(NodeID node);
+    virtual void pickNode(NodeID node, std::unordered_set<NodeID> *updated = nullptr);
+    virtual void removeNode(NodeID node);
 
     std::vector<NodeID> getNeighbors(NodeID node) const;
-    // get AgreeSetIDs on adjacent edges
+    // get AgreeSetIDs on adjacent edges, in order
     std::vector<AgreeSetID> getPossibleAgreeSets(NodeID node) const;
-    // get AgreeSetIDs on adjacent edges to picked nodes
+    // get AgreeSetIDs on adjacent edges to picked nodes, in order
     std::vector<AgreeSetID> getCertainAgreeSets(NodeID node) const;
     // returns nodes that appear in all edges labeled with some particular agree-set
     std::vector<NodeID> getForced() const;

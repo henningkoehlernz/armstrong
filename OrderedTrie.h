@@ -1,5 +1,5 @@
-#ifndef INFORMATIVE_GRAPH_H
-#define INFORMATIVE_GRAPH_H
+#ifndef ORDERED_TRIE_H
+#define ORDERED_TRIE_H
 
 #include <vector>
 #include <unordered_map>
@@ -34,9 +34,12 @@ private:
     Node root;
     std::unordered_map<T,Set> valueMap;
 public:
-    void insert(T id, const Set &value);
-    void update(T id, const Set &value);
-    void erase(T id);
+    bool contains(T id) const;
+    const Set& at(T id) const;
+    // insert or update; returns if changes were made
+    bool insert(T id, const Set &value);
+    // erase if present; returns if changes were made
+    bool erase(T id);
     std::vector<T> findSubsets(const Set &s) const;
     std::vector<T> findSupersets(const Set &s) const;
 };
