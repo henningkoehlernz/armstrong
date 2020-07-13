@@ -2,6 +2,7 @@
 #define DOMINANCE_GRAPH_H
 
 #include "InformativeGraph.h"
+#include "OrderedTrie.h"
 
 /**
  * extends InformativeGraph by tracking dominance information

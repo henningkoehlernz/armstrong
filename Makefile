@@ -20,16 +20,23 @@ edgeminer:
 	$(CC) -o edgeMiner AgreeSetEdgeMinerCSV.cpp CSVUtil.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetEdgeMiner.cpp $(LINK)
 random:
 	$(CC) -o random RandomArmstrong.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetGraph.cpp $(LINK)
-test:
-	$(CC) -o testASG TestAgreeSetGraph.cpp AgreeSetGraph.cpp $(LINK)
-	$(CC) -o testASM TestAgreeSetMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp $(LINK)
-	$(CC) -o testASEM TestAgreeSetEdgeMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetEdgeMiner.cpp $(LINK)
-	$(CC) -o testTrie TestOrderedTrie.cpp $(LINK)
+test: testASG testASM testASEM testTrie testIG
 # add this to generate core dumps: --catch_system_errors=no
+testASG:
+	$(CC) -o testASG TestAgreeSetGraph.cpp AgreeSetGraph.cpp $(LINK)
 	./testASG
+testASM:
+	$(CC) -o testASM TestAgreeSetMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp $(LINK)
 	./testASM
+testASEM:
+	$(CC) -o testASEM TestAgreeSetEdgeMiner.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp AgreeSetEdgeMiner.cpp $(LINK)
 	./testASEM
+testTrie:
+	$(CC) -o testTrie TestOrderedTrie.cpp $(LINK)
 	./testTrie
+testIG:
+	$(CC) -o testIG TestInformativeGraph.cpp InformativeGraph.cpp DominanceGraph.cpp $(LINK)
+	./testIG
 clean:
-	rm armstrong informative miner edgeMiner random testASG testASM testASEM testTrie
-.PHONY: armstrong informative miner edgeMiner random testASG testASM testASEM
+	rm armstrong informative miner edgeMiner random testASG testASM testASEM testTrie testIG
+.PHONY: armstrong informative miner edgeMiner random testASG testASM testASEM testIG

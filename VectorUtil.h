@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <sstream>
+#include <unordered_set>
+#include <algorithm>
 
 namespace std
 {
@@ -38,6 +40,17 @@ namespace std
     std::ostream& operator<<(std::ostream& os, const std::pair<T1,T2> &v)
     {
         return os << "(" << v.first << "," << v.second << ")";
+    }
+
+    template <typename T>
+    std::ostream& operator<<(std::ostream& os, const std::unordered_set<T> &v)
+    {
+        std::vector<T> sorted(v.begin(), v.end());
+        std::sort(sorted.begin(), sorted.end());
+        os << "{ ";
+        for ( const T& elem : sorted )
+            os << elem << ' ';
+        return os << '}';
     }
 
     // for use with boost
