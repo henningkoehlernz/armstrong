@@ -12,10 +12,31 @@ bool DominanceGraph::updateCertain(NodeID node)
 bool DominanceGraph::updatePossible(NodeID node)
 {
     std::vector<AgreeSetID> p = getPossibleAgreeSets(node);
-    if ( p.empty() )
+    if ( p.empty() || picked(node) )
+    {
+        dominated.erase(node);
         return possible.erase(node);
+    }
     else
+    {
+        dominated.insert(node);
         return possible.insert(node, p);
+    }
+}
+
+NodeID DominanceGraph::findDominated()
+{
+    while ( !dominated.empty() )
+    {
+        NodeID node = *dominated.begin();
+        // even if node used to be dominated, it may not be any longer
+        // e.g. removal of one of two nodes that dominate each other could cause this
+        if ( isDominated(node) )
+            return node;
+        else
+            dominated.erase(node);
+    }
+    return NaNode;
 }
 
 DominanceGraph::DominanceGraph(const InformativeGraph &g) : InformativeGraph(g)
@@ -25,6 +46,11 @@ DominanceGraph::DominanceGraph(const InformativeGraph &g) : InformativeGraph(g)
         updateCertain(node);
         updatePossible(node);
     }
+    // dominance checks require possible & certain to be up-to-date
+    for ( NodeID node = 0; node < nodeCount(); node++ )
+        if ( certain.contains(node) )
+            for ( NodeID dominatedNode : getDominated(node) )
+                dominated.insert(dominatedNode);
 }
 
 void DominanceGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated)
@@ -40,11 +66,20 @@ void DominanceGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated)
         updateCertain(updatedNode);
         updatePossible(updatedNode);
     }
+    // picked nodes no longer participate in dominance checks
+    // no need to update certain, as picked node cannot have certain agree sets
+    updatePossible(node);
     // neighbors need to update certain agree sets
     for ( NodeID neighbor : getNeighbors(node) )
+    {
         // avoid updating twice
         if ( updated->count(neighbor) == 0 )
             updateCertain(neighbor);
+        // neighbors of newly picked node may dominate new nodes
+        // possible and certain[neighbor] are up-to-date, so getDominated will be correct
+        for ( NodeID n : getDominated(neighbor) )
+            dominated.insert(n);
+    }
 }
 
 void DominanceGraph::removeNode(NodeID node)
@@ -53,19 +88,16 @@ void DominanceGraph::removeNode(NodeID node)
     std::vector<NodeID> oldNeighbors = getNeighbors(node);
     InformativeGraph::removeNode(node);
     for ( NodeID neighbor : oldNeighbors )
-    {
-        std::vector<AgreeSetID> p = getPossibleAgreeSets(neighbor);
-        if ( p.empty() )
-            possible.erase(neighbor);
-        else
-            possible.insert(neighbor, p);
-    }
+        updatePossible(neighbor);
+    // remove node from dominance considerations
+    updatePossible(node);
+    updateCertain(node);
 }
 
 bool DominanceGraph::isDominated(NodeID node) const
 {
-    if ( degree(node) == 0 )
-        return nodeCount() > 1;
+    if ( degree(node) == 0 || picked(node) )
+        return false;
     std::vector<NodeID> dom = certain.findSupersets(possible.at(node));
     return !dom.empty() && !(dom.size() == 1 && dom[0] == node);
 }
@@ -79,4 +111,20 @@ std::vector<NodeID> DominanceGraph::getDominated(NodeID node) const
         if ( !picked(dominated) && dominated != node )
             result.push_back(dominated);
     return result;
+}
+
+void DominanceGraph::removeAllDominated(std::unordered_set<NodeID> *updated)
+{
+    NodeID dominatedNode = findDominated();
+    while ( dominatedNode != NaNode )
+    {
+        if ( updated != nullptr )
+        {
+            for ( NodeID neighbor : getNeighbors(dominatedNode) )
+                updated->insert(neighbor);
+            updated->insert(dominatedNode);
+        }
+        removeNode(dominatedNode);
+        dominatedNode = findDominated();
+    }
 }
