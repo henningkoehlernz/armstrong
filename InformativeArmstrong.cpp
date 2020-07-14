@@ -1,8 +1,14 @@
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/program_options.hpp>
 #include <queue>
+
 #include "DominanceGraph.h"
-#include "OrderedTrie.h"
 
 using namespace std;
+namespace po = boost::program_options;
 
 struct GreedyNode
 {
@@ -99,6 +105,38 @@ std::vector<NodeID> pickGreedy(const InformativeGraph &graph, bool pruning)
 
 int main(int argc, char* argv[])
 {
+    bool showResult = false;
+    // extract command-line arguments
+    try {
+        po::options_description desc("Options");
+        desc.add_options()
+            ("help,h", "show options (this)")
+            ("show,s", "show solution")
+        ;
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+
+        if ( vm.count("help") )
+        {
+            cout << desc << endl;
+            return 0;
+        }
+        if ( vm.count("show") )
+            showResult = true;
+    } catch(exception& e) {
+        cerr << e.what() << "\n";
+        return 1;
+    }
+
+    // init logging
+    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
+    boost::log::add_common_attributes();
+    boost::log::add_console_log(std::cout,
+        boost::log::keywords::format = "[%TimeStamp%] %Message%",
+        boost::log::keywords::auto_flush = true
+    );
+
     // parse informative graph
     InformativeGraph g;
     while ( true )
@@ -111,9 +149,19 @@ int main(int argc, char* argv[])
         else
             break;
     }
+
+    // run algorithms
     vector<NodeID> greedy = pickGreedy(g, false);
-    cout << "Greedy: " << greedy.size() << " nodes picked: " << greedy << endl;
     vector<NodeID> pruned = pickGreedy(g, true);
-    cout << "Pruned: " << pruned.size() << " nodes picked: " << pruned << endl;
+    if ( showResult )
+    {
+        cout << "Greedy: " << greedy.size() << " nodes picked: " << greedy << endl;
+        cout << "Pruned: " << pruned.size() << " nodes picked: " << pruned << endl;
+    }
+    else
+    {
+        cout << "Greedy: " << greedy.size() << " nodes picked" << endl;
+        cout << "Pruned: " << pruned.size() << " nodes picked" << endl;
+    }
     return 0;
 }
