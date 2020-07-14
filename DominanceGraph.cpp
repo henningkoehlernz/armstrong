@@ -1,3 +1,4 @@
+#include <boost/log/trivial.hpp>
 #include "DominanceGraph.h"
 
 bool DominanceGraph::updateCertain(NodeID node)
@@ -142,14 +143,18 @@ std::vector<NodeID> DominanceGraph::prune(std::unordered_set<NodeID> *updated)
     do {
         propagateUpdates();
         // removing nodes can make nodes newly forced
-        for ( NodeID node : getForced() )
-        {
-            pickNode(node, &localUpdated);
-            propagateUpdates();
-            forcedNodes.push_back(node);
-        }
+        std::vector<NodeID> forced = getForced();
+        BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << ": forced=" << forced;
+        for ( NodeID node : forced )
+            if ( !picked(node) )
+            {
+                pickNode(node, &localUpdated);
+                propagateUpdates();
+                forcedNodes.push_back(node);
+            }
         // after picking forced nodes, we may get dominated nodes again
         removeAllDominated(&localUpdated);
+        BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << ": localUpdated=" << localUpdated;
     } while ( !localUpdated.empty() );
     return forcedNodes;
 }

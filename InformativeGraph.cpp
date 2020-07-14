@@ -1,5 +1,6 @@
 #include <unordered_set>
 #include <boost/format.hpp>
+#include <boost/log/trivial.hpp>
 
 #include "InformativeGraph.h"
 #include "VectorUtil.h"
@@ -22,6 +23,11 @@ bool InformativeGraph::validate(std::string &msg) const
             }
         }
     return true;
+}
+
+bool InformativeGraph::hasEdge(NodeID v, NodeID w) const
+{
+    return contains(neighbors[v], w);
 }
 
 void InformativeGraph::removeEdge(NodeID v, NodeID w)
@@ -88,6 +94,7 @@ void InformativeGraph::addEdge(NodeID v, NodeID w, AgreeSetID ag)
 void InformativeGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated)
 {
     assert(!picked(node));
+    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << '(' << node << ')';
     pickedNodes[node] = true;
     // automatically eliminate edges that are no longer needed
     for ( AgreeSetID ag : getCertainAgreeSets(node) )
@@ -97,6 +104,7 @@ void InformativeGraph::pickNode(NodeID node, std::unordered_set<NodeID> *updated
 void InformativeGraph::removeNode(NodeID node)
 {
     assert(!picked(node));
+    BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << '(' << node << ')';
     for ( NodeID neighbor : neighbors[node] )
         removeEdge(node, neighbor);
 }
@@ -134,6 +142,9 @@ std::vector<NodeID> InformativeGraph::getForced() const
     std::vector<std::vector<NodeID>> forcedByAgreeSet;
     for ( std::pair<Edge,AgreeSetID> keyValue : edgeLabels )
     {
+        // skip edges already removed
+        if ( !hasEdge(keyValue.first.first, keyValue.first.second) )
+            continue;
         // resize vector if needed
         if ( keyValue.second >= forcedByAgreeSet.size() )
             forcedByAgreeSet.resize(keyValue.second + 1, NotVisited);

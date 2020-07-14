@@ -42,13 +42,19 @@ namespace std
         return os << "(" << v.first << "," << v.second << ")";
     }
 
+    template <typename ContainerT>
+    std::vector<typename ContainerT::value_type> sorted(const ContainerT &data)
+    {
+        std::vector<typename ContainerT::value_type> result(data.begin(), data.end());
+        std::sort(result.begin(), result.end());
+        return result;
+    }
+
     template <typename T>
     std::ostream& operator<<(std::ostream& os, const std::unordered_set<T> &v)
     {
-        std::vector<T> sorted(v.begin(), v.end());
-        std::sort(sorted.begin(), sorted.end());
         os << "{ ";
-        for ( const T& elem : sorted )
+        for ( const T& elem : std::sorted(v) )
             os << elem << ' ';
         return os << '}';
     }

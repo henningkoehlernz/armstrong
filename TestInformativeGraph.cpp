@@ -36,10 +36,10 @@ BOOST_AUTO_TEST_CASE( test_getNeighbors )
 BOOST_AUTO_TEST_CASE( test_getForced )
 {
     InformativeGraph g = toGraph();
-    vector<NodeID> forced = g.getForced();
-    sort(forced.begin(), forced.end());
-    vector<NodeID> expected = {2, 4, 5};
-    BOOST_CHECK_EQUAL(forced, expected);
+    BOOST_CHECK_EQUAL(sorted(g.getForced()), vector<NodeID>({2, 4, 5}));
+    // check again after removing node
+    g.removeNode(0);
+    BOOST_CHECK_EQUAL(sorted(g.getForced()), vector<NodeID>({2, 3, 4, 5}));
 }
 
 BOOST_AUTO_TEST_CASE( test_pickNode )
@@ -104,4 +104,24 @@ BOOST_AUTO_TEST_CASE( test_getDominated )
     g.pickNode(1);
     BOOST_CHECK_EQUAL(g.getDominated(0), vector<NodeID>({3}));
     BOOST_CHECK_EQUAL(g.getDominated(3), vector<NodeID>({0}));
+}
+
+BOOST_AUTO_TEST_CASE( test_removeAllDominated )
+{
+    DominanceGraph g(toGraph());
+    g.pickNode(4);
+    g.removeAllDominated();
+    BOOST_CHECK(g.degree(0) == 0);
+    BOOST_CHECK(g.degree(2) == 2);
+    BOOST_CHECK(g.degree(4) == 2);
+}
+
+BOOST_AUTO_TEST_CASE( test_prune )
+{
+    DominanceGraph g(toGraph());
+    std::vector<NodeID> picked = g.prune();
+    std::sort(picked.begin(), picked.end());
+    std::vector<NodeID> expected = { 2, 3, 4, 5 };
+    BOOST_CHECK_EQUAL(picked, expected);
+    BOOST_CHECK(g.degree(1) == 0);
 }

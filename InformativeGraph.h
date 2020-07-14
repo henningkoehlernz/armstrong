@@ -30,6 +30,7 @@ private:
 
     // validate that graph is consistent, returning error message in msg
     bool validate(std::string &msg) const;
+    bool hasEdge(NodeID v, NodeID w) const;
 
     void removeEdge(NodeID v, NodeID w);
     void removeAgreeSet(AgreeSetID ag, std::unordered_set<NodeID> *updated);
