@@ -128,3 +128,28 @@ void DominanceGraph::removeAllDominated(std::unordered_set<NodeID> *updated)
         dominatedNode = findDominated();
     }
 }
+
+std::vector<NodeID> DominanceGraph::prune(std::unordered_set<NodeID> *updated)
+{
+    std::unordered_set<NodeID> localUpdated;
+    std::vector<NodeID> forcedNodes;
+    auto propagateUpdates = [updated,&localUpdated]()
+    {
+        if ( updated != nullptr )
+            updated->insert(localUpdated.begin(), localUpdated.end());
+        localUpdated.clear();
+    };
+    do {
+        propagateUpdates();
+        // removing nodes can make nodes newly forced
+        for ( NodeID node : getForced() )
+        {
+            pickNode(node, &localUpdated);
+            propagateUpdates();
+            forcedNodes.push_back(node);
+        }
+        // after picking forced nodes, we may get dominated nodes again
+        removeAllDominated(&localUpdated);
+    } while ( !localUpdated.empty() );
+    return forcedNodes;
+}

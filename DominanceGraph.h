@@ -46,6 +46,12 @@ public:
      * if updated is set, inserts all nodes adjacent to edges removed
      */
     void removeAllDominated(std::unordered_set<NodeID> *updated = nullptr);
+    /**
+    * remove dominated nodes and pick forced nodes until neither of those nodes exists in the graph
+    * inserts into updated all nodes adjacent to edges removed
+    * returns nodes picked (due to being or becoming forced)
+    */
+    std::vector<NodeID> prune(std::unordered_set<NodeID> *updated = nullptr);
 };
 
 #endif

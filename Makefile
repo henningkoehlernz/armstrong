@@ -13,7 +13,7 @@ CC = g++ -std=c++2a -O2 -Wall -g
 armstrong:
 	$(CC) -o armstrong Armstrong.cpp AgreeSetGraph.cpp $(LINK)
 informative:
-	$(CC) -o informative InformativeArmstrong.cpp InformativeGraph.cpp $(LINK)
+	$(CC) -o informative InformativeArmstrong.cpp InformativeGraph.cpp DominanceGraph.cpp $(LINK)
 miner:
 	$(CC) -o miner AgreeSetMinerCSV.cpp CSVUtil.cpp AgreeSetUtil.cpp AgreeSetMiner.cpp $(LINK)
 edgeminer:
