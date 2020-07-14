@@ -58,7 +58,10 @@ std::vector<NodeID> pickGreedy(const InformativeGraph &graph, bool pruning)
     else
     {
         for ( NodeID node : g->getForced() )
+        {
+            BOOST_LOG_TRIVIAL(info) << "picking forced node " << node;
             g->pickNode(node);
+        }
     }
     // prepare queue
     for ( NodeID node = 0; node < nodeCount; node++ )
@@ -77,6 +80,7 @@ std::vector<NodeID> pickGreedy(const InformativeGraph &graph, bool pruning)
         {
             if ( !g->picked(next.node) )
             {
+                BOOST_LOG_TRIVIAL(info) << "picking node " << next.node;
                 // we don't care about updates from edge removal as this will only lower greedy weight
                 g->pickNode(next.node);
                 // certainSize of neighbors may have increased
@@ -106,11 +110,13 @@ std::vector<NodeID> pickGreedy(const InformativeGraph &graph, bool pruning)
 int main(int argc, char* argv[])
 {
     bool showResult = false;
+    bool debug = false;
     // extract command-line arguments
     try {
         po::options_description desc("Options");
         desc.add_options()
             ("help,h", "show options (this)")
+            ("debug,d", "print debug information")
             ("show,s", "show solution")
         ;
         po::variables_map vm;
@@ -122,6 +128,8 @@ int main(int argc, char* argv[])
             cout << desc << endl;
             return 0;
         }
+        if ( vm.count("debug") )
+            debug = true;
         if ( vm.count("show") )
             showResult = true;
     } catch(exception& e) {
@@ -130,7 +138,10 @@ int main(int argc, char* argv[])
     }
 
     // init logging
-    boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
+    if ( debug )
+        boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::info );
+    else
+        boost::log::core::get()->set_filter( boost::log::trivial::severity >= boost::log::trivial::warning );
     boost::log::add_common_attributes();
     boost::log::add_console_log(std::cout,
         boost::log::keywords::format = "[%TimeStamp%] %Message%",

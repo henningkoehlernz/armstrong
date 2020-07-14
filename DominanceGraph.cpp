@@ -125,6 +125,7 @@ void DominanceGraph::removeAllDominated(std::unordered_set<NodeID> *updated)
                 updated->insert(neighbor);
             updated->insert(dominatedNode);
         }
+        BOOST_LOG_TRIVIAL(info) << "removing dominated node " << dominatedNode;
         removeNode(dominatedNode);
         dominatedNode = findDominated();
     }
@@ -144,17 +145,16 @@ std::vector<NodeID> DominanceGraph::prune(std::unordered_set<NodeID> *updated)
         propagateUpdates();
         // removing nodes can make nodes newly forced
         std::vector<NodeID> forced = getForced();
-        BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << ": forced=" << forced;
         for ( NodeID node : forced )
             if ( !picked(node) )
             {
+                BOOST_LOG_TRIVIAL(info) << "picking forced node " << node;
                 pickNode(node, &localUpdated);
                 propagateUpdates();
                 forcedNodes.push_back(node);
             }
         // after picking forced nodes, we may get dominated nodes again
         removeAllDominated(&localUpdated);
-        BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << ": localUpdated=" << localUpdated;
     } while ( !localUpdated.empty() );
     return forcedNodes;
 }

@@ -105,8 +105,10 @@ void InformativeGraph::removeNode(NodeID node)
 {
     assert(!picked(node));
     BOOST_LOG_TRIVIAL(trace) << __FUNCTION__ << '(' << node << ')';
-    for ( NodeID neighbor : neighbors[node] )
+    std::vector<NodeID> neighborsOfNode = neighbors[node];
+    for ( NodeID neighbor : neighborsOfNode )
         removeEdge(node, neighbor);
+    assert(degree(node) == 0);
 }
 
 std::vector<NodeID> InformativeGraph::getNeighbors(NodeID node) const
