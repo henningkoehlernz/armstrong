@@ -25,14 +25,14 @@ bool DominanceGraph::updatePossible(NodeID node)
     }
 }
 
-NodeID DominanceGraph::findDominated()
+NodeID DominanceGraph::findDominated(std::vector<NodeID> *dominators)
 {
     while ( !dominated.empty() )
     {
         NodeID node = *dominated.begin();
         // even if node used to be dominated, it may not be any longer
         // e.g. removal of one of two nodes that dominate each other could cause this
-        if ( isDominated(node) )
+        if ( isDominated(node, dominators) )
             return node;
         else
             dominated.erase(node);
@@ -95,12 +95,23 @@ void DominanceGraph::removeNode(NodeID node)
     updateCertain(node);
 }
 
-bool DominanceGraph::isDominated(NodeID node) const
+bool DominanceGraph::isDominated(NodeID node, std::vector<NodeID> *dominators) const
 {
     if ( degree(node) == 0 || picked(node) )
         return false;
-    std::vector<NodeID> dom = certain.findSupersets(possible.at(node));
-    return !dom.empty() && !(dom.size() == 1 && dom[0] == node);
+    if ( dominators == nullptr )
+    {
+        std::vector<NodeID> dom = certain.findSupersets(possible.at(node));
+        return !dom.empty() && !(dom.size() == 1 && dom[0] == node);
+    }
+    else
+    {
+        dominators->clear();
+        for ( NodeID dominator : certain.findSupersets(possible.at(node)) )
+            if ( dominator != node )
+                dominators->push_back(dominator);
+        return !dominators->empty();
+    }
 }
 
 std::vector<NodeID> DominanceGraph::getDominated(NodeID node) const
@@ -116,7 +127,8 @@ std::vector<NodeID> DominanceGraph::getDominated(NodeID node) const
 
 void DominanceGraph::removeAllDominated(std::unordered_set<NodeID> *updated)
 {
-    NodeID dominatedNode = findDominated();
+    std::vector<NodeID> dominators;
+    NodeID dominatedNode = findDominated(&dominators);
     while ( dominatedNode != NaNode )
     {
         if ( updated != nullptr )
@@ -125,9 +137,9 @@ void DominanceGraph::removeAllDominated(std::unordered_set<NodeID> *updated)
                 updated->insert(neighbor);
             updated->insert(dominatedNode);
         }
-        BOOST_LOG_TRIVIAL(info) << "removing dominated node " << dominatedNode;
+        BOOST_LOG_TRIVIAL(info) << "removing node " << dominatedNode << " dominated by " << dominators;
         removeNode(dominatedNode);
-        dominatedNode = findDominated();
+        dominatedNode = findDominated(&dominators);
     }
 }
 

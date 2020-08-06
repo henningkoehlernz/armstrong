@@ -19,8 +19,11 @@ private:
 
     bool updateCertain(NodeID node);
     bool updatePossible(NodeID node);
-    // returns NaNode if no dominated node exists
-    NodeID findDominated();
+    /**
+     * returns NaNode if no dominated node exists
+     * if dominators is set, inserts nodes dominating node returned
+     */
+    NodeID findDominated(std::vector<NodeID> *dominators = nullptr);
 
 public:
     // only construct after all edge inserts have been completed
@@ -33,8 +36,9 @@ public:
      * returns true if
      * (1) node is not isolated and not picked, and
      * (2) a different node exists whose certain agree set subsumes the possible agree set of node
+     * if dominators is set, inserts nodes dominating given node
      */
-    bool isDominated(NodeID node) const;
+    bool isDominated(NodeID node, std::vector<NodeID> *dominators = nullptr) const;
     /**
      * returns all different nodes that are
      * (1) not isolated and not picked, and
