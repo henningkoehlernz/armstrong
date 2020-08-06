@@ -107,6 +107,15 @@ std::vector<NodeID> pickGreedy(const InformativeGraph &graph, bool pruning)
     return g->getPicked();
 }
 
+void runGreedy(const InformativeGraph &g, bool pruning, bool show)
+{
+    vector<NodeID> result = pickGreedy(g, pruning);
+    if ( show )
+        cout << (pruning ? "Pruned: " : "Greedy: ") << result.size() << " nodes picked: " << result << endl;
+    else
+        cout << (pruning ? "Pruned: " : "Greedy: ") << result.size() << " nodes picked" << endl;
+}
+
 int main(int argc, char* argv[])
 {
     bool showResult = false;
@@ -162,17 +171,7 @@ int main(int argc, char* argv[])
     }
 
     // run algorithms
-    vector<NodeID> greedy = pickGreedy(g, false);
-    vector<NodeID> pruned = pickGreedy(g, true);
-    if ( showResult )
-    {
-        cout << "Greedy: " << greedy.size() << " nodes picked: " << greedy << endl;
-        cout << "Pruned: " << pruned.size() << " nodes picked: " << pruned << endl;
-    }
-    else
-    {
-        cout << "Greedy: " << greedy.size() << " nodes picked" << endl;
-        cout << "Pruned: " << pruned.size() << " nodes picked" << endl;
-    }
+    runGreedy(g, false, showResult);
+    runGreedy(g, true, showResult);
     return 0;
 }
